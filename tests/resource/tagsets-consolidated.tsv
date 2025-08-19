@@ -1,0 +1,24 @@
+category	Name	label_AG	label_OLG	risk	keep
+Formales	Gericht Aktenzeichen	formal-ref-number	court-docket	niedrig	True
+Formales	Gericht Name	formal-court	court-name	niedrig	True
+Formales	Sonstiges	formal-garbage		niedrig	True
+Natürliche Person	Name	nat-name	nat-name	hoch	False
+Natürliche Person	Juristischer Funktionsträger	nat-jur	nat-jur	mittel	False
+Natürliche Person	identifizierendes Merkmal	nat-idx	nat-idx	mittel	False
+Natürliche Person	Sonstiges		nat-misc	mittel	False
+Juristische Person	Name	jur-name	jur-name	mittel	False
+Juristische Person	identifizierendes Merkmal	jur-idx	jur-idx	niedrig	False
+Adresse	Ortsangabe	address-name	address-name	hoch	False
+Adresse	identifizierendes Merkmal	address-idx	address-idx	mittel	False
+Fahrzeug	Kennzeichen	pkw-name	car-name	hoch	False
+Fahrzeug	identifizierendes Merkmal	pkw-idx	car-idx	niedrig	False
+Fahrzeug	Fahrgestellnummer		car-number	hoch	False
+Datum	Prozessgeschichte	date-process	date-process	niedrig	False
+Datum	Sachverhalt	date-facts	date-fact	niedrig	False
+Datum	Weltwissen	date-world	date-world	niedrig	False
+Immaterialgut	Name		imm-name	mittel	False
+Immaterialgut	identifizierendes Merkmal		imm-idx	niedrig	False
+Sonstiges	Kontaktdaten		contact-idx	hoch	False
+Sonstiges	Geschäftszeichen		code-idx	niedrig	False
+Sonstiges	Formatierungsfehler		misc-mistake	niedrig	False
+Sonstiges	Sonstiges	misc-idx	misc-idx	niedrig	False
