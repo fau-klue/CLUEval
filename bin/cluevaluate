@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 
-from CLUEval.evaluation import MetricsForSpansAnonymisation, MetricsForCategoricalSpansAnonymisation
-from CLUEval.data import Convert, Relevel, Join, JoinMultitaskSpans
+from clueval.evaluation import MetricsForSpansAnonymisation, MetricsForCategoricalSpansAnonymisation
+from clueval.data import Convert, Relevel, Join, JoinMultitaskSpans
 import pandas as pd
 import numpy as np
 
