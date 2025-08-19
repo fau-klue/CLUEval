@@ -1,6 +1,6 @@
 # CLUEval
 
-This package is a simple tool for evaluating detected spans against reference annotations for text anonymisation. It provides common metrics such as precision, recall and F1-score with the options for weighting recall more heavily if required.
+CLUEval is a lightweight Python module for evaluating text anonymisation using token classification. It provides common metrics such as precision, recall and F1-score with the options for weighting recall more heavily if required.
 
 ## Installation
 ```sh
