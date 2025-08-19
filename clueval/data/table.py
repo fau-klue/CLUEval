@@ -144,7 +144,7 @@ class Join:
                 id_max_overlap = overlap.idxmax()
                 # Assign span id from right to corresponded span from left
                 # left.id_R.iloc[i] = right.id.iloc[id_max_overlap]
-                left.loc[i, "id_R"] = right.id.iloc [id_max_overlap]
+                left.loc[i, "id_R"] = right.id.iloc[id_max_overlap]
                 # Assign span id from left to corresponded span from right
                 # right.id_L.iloc[id_max_overlap] = left.id.iloc[i]
                 right.loc[id_max_overlap, "id_L"] = left.id.iloc[i]
@@ -202,10 +202,12 @@ class JoinMultitaskSpans(Join):
         # Fill in some information for spans found by only one of the models
         # Assign "00_ANY" as new category to anon_cat table. This class indicates that an anonymisation span has
         # been predicted but not information class.
-        anon_cat[["start", "end", "text", "id", "anon"]] = anon_cat[[f"start{suffixes[1]}", f"end{suffixes[1]}",
-                                                         f"text{suffixes[1]}", f"id{suffixes[1]}", "anon"]].where(
-            anon_cat.status == "FP", anon_cat[["start", "end", "text", "id", "anon"]].values
-        )
+        cols = ["start", "end", "text", "id", "anon"]
+        source_cols = [f"start{suffixes[1]}", f"end{suffixes[1]}", f"text{suffixes[1]}", f"id{suffixes[1]}", "anon"]
+
+        for col, source_col in zip(cols, source_cols):
+            anon_cat[col] = np.where(anon_cat.status == "FP", anon_cat[source_col], anon_cat[col])
+
         # anon_cat["cat"].loc[anon_cat.status == "FN"] = "00_Any"
         anon_cat.loc[anon_cat.status == "FN", "cat"] = "00_Any"
         # Reorder spans based on position ids and remove duplications if exist -> Remove nested spans and keep longer
@@ -214,7 +216,7 @@ class JoinMultitaskSpans(Join):
         anon_cat = anon_cat.loc[~anon_cat.duplicated(subset="start")].loc[~anon_cat.duplicated(subset="end")]
         while any(anon_cat.end.shift() >= anon_cat.start):
             anon_cat = anon_cat.loc[~(anon_cat.end.shift(fill_value=True) >= anon_cat.start)].reset_index(drop=True)
-        assert not any(anon_cat.end.shift() >= anon_cat.start) # This assertion should check whether the spans are correctly sorted
+        assert not any(anon_cat.end.shift() >= anon_cat.start)  # This assertion should check whether the spans are correctly sorted
         anon_cat.drop(columns=["status", f"start{suffixes[1]}", f"end{suffixes[1]}", f"id{suffixes[1]}", f"text{suffixes[1]}"], inplace=True)
 
         # Secondly, join Anon-Entity table with Risk spans

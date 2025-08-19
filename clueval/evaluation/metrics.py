@@ -85,8 +85,8 @@ class MetricsForCategoricalSpansAnonymisation(Metrics):
                                       if cat is not np.nan
                                       ]
                                      )
-        self.left_categories.loc[pd.isna(self.left_categories)] = ""
-        self.right_categories.loc[pd.isna(self.right_categories)] = ""
+        self.left_categories = self.left_categories.fillna("")
+        self.right_categories = self.right_categories.fillna("")
         self.exact_match_ids = self.left_categories == self.right_categories
         self.tp_ids = self.status == "TP"
 
