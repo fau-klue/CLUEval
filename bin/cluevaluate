@@ -2,20 +2,27 @@
 
 from clueval.evaluation import MetricsForSpansAnonymisation, MetricsForCategoricalSpansAnonymisation
 from clueval.data import Convert, Relevel, Join, JoinMultitaskSpans
+from clueval.version import __version__
 import pandas as pd
 import argparse
 
 
 def arguments():
-    parser = argparse.ArgumentParser()
+    parser = argparse.ArgumentParser(
+        description="cluevaluate: evaluate span predictions",
+        formatter_class=argparse.ArgumentDefaultsHelpFormatter
+    )
+    parser.add_argument("-v", "--version", action="version", version="clueval %s" % __version__,
+                        help="output version information and exit")
+
     parser.add_argument("reference", help="Path to reference file.")
     parser.add_argument("candidate", help="Path to candidate or prediction file.")
     return parser.parse_args()
 
 
-if __name__=="__main__":
+if __name__== "__main__":
     args = arguments()
-    
+
     # Convert BIO to spans tables
     convert_ref_spans = Convert(args.reference)
     convert_cand_spans = Convert(args.candidate)
@@ -40,15 +47,15 @@ if __name__=="__main__":
     all_df = JoinMultitaskSpans(anon_df, entity_df, risk_df)(on=["start", "end"])
     reference_all = Join(reference_df, all_df)(on=["start", "end"])
     reference_high_risk = Join(reference_df.loc[reference_df.risk == "hoch"], all_df)(on=["start", "end"])
-    
+
     spans_evaluation = pd.concat([MetricsForSpansAnonymisation(reference_anon_df)(lenient=True, row_name="Anon"), 
-                                      MetricsForSpansAnonymisation(reference_entity_df)(lenient=True, row_name="Entity"),
-                                      MetricsForSpansAnonymisation(reference_risk_df)(lenient=True, row_name="Risk"),
-                                      MetricsForSpansAnonymisation(reference_all)(lenient=True, row_name="All"),
-                                      MetricsForSpansAnonymisation(reference_high_risk)(lenient=True, row_name="High risk")
-                                    ])[["P", "R", "F1", "FN", "FP", "support"]].reset_index().rename(columns={"index": "Span", "support": "Support"})
+                                  MetricsForSpansAnonymisation(reference_entity_df)(lenient=True, row_name="Entity"),
+                                  MetricsForSpansAnonymisation(reference_risk_df)(lenient=True, row_name="Risk"),
+                                  MetricsForSpansAnonymisation(reference_all)(lenient=True, row_name="All"),
+                                  MetricsForSpansAnonymisation(reference_high_risk)(lenient=True, row_name="High risk")
+                                  ])[["P", "R", "F1", "FN", "FP", "support"]].reset_index().rename(columns={"index": "Span", "support": "Support"})
     print(f"Spans evaluation:\n{spans_evaluation}\n")
-    
+
     entity_spans_evaluation = MetricsForCategoricalSpansAnonymisation(reference_entity_df, column="cat")()[["P", "R", "F1", "support"]].reset_index().rename(columns={"index": "Entity", "support": "Support"})
     print(f"Entity spans:\n{entity_spans_evaluation}\n")
 
