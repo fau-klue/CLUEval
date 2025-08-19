@@ -4,11 +4,11 @@ CLUEval is a lightweight Python module for evaluating text anonymisation using t
 
 ## Installation
 ```sh
+pip install git+https://github.com/fau-klue/CLUEval
 ```
 ### Requirements
 - pandas
 - numpy
-
 
 ## Usage
 The input for CLUEval should be formatted according to the BIO tagging scheme.
