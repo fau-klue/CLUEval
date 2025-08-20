@@ -74,7 +74,6 @@ class Join:
         """
         exact_match_df = self.get_exact_match(on=on, how=how, suffixes=suffixes)
         rest_match_df = self.match_rest(exact_match_df, suffixes=suffixes)
-
         # Concatenate both dataframes to a single one
         all_df = pd.concat([exact_match_df, rest_match_df])
         # Drop redundant columns
@@ -122,7 +121,12 @@ class Join:
         # Apply _get_overlap() function to extract partial matches between rest_x and rest_y
         # Join both tables to a unified one afterward
         rest_x, rest_y = self._get_overlaps(rest_x, rest_y)
-        rest = rest_x.merge(rest_y, left_on="id_R", right_on="id", how="outer", suffixes=suffixes)
+        # Handle ValueError when reference and prediction yield the same spans 
+        if not rest_x.empty and not rest_y.empty: 
+            rest = rest_x.merge(rest_y, left_on="id_R", right_on="id", how="outer", suffixes=suffixes)
+        else:
+            # Merge empty dataframes -> no rest matching
+            rest = pd.merge(rest_x, rest_y, on="id", suffixes=suffixes)
         return self._assign_status_to_rest_match(rest)
 
     @staticmethod
