@@ -71,7 +71,7 @@ class Convert:
                     span_dictionary["verdict"].append(verdict_id)
                     span_dictionary["text"].append(tokens)
         dataframe = pd.DataFrame.from_dict(span_dictionary)
-        dataframe = self._assign_span_ids(self.dataframe, prefix=prefix)
+        dataframe = self._assign_span_ids(dataframe, prefix=prefix)
         return dataframe
     
     @staticmethod
