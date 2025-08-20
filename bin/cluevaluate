@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 
 from clueval.evaluation import MetricsForSpansAnonymisation, MetricsForCategoricalSpansAnonymisation
-from clueval.data import Convert, Relevel, Join, JoinMultitaskSpans
+from clueval.data import Convert, Join, JoinMultitaskSpans
 from clueval.version import __version__
 import pandas as pd
 import argparse
@@ -27,16 +27,10 @@ if __name__== "__main__":
     convert_ref_spans = Convert(args.reference)
     convert_cand_spans = Convert(args.candidate)
 
-    reference_df = convert_ref_spans()
-    anon_df = convert_cand_spans(gold=False)
-    entity_df = convert_cand_spans(gold=False, tag_column_id=2)
-    risk_df = convert_cand_spans(gold=False, tag_column_id=3)
-
-    # Relevel
-    reference_df = Relevel(reference_df)(cat=True, prefix="gold")
-    anon_df = Relevel(anon_df)(prefix="anon")
-    entity_df = Relevel(entity_df)(cat=True, prefix="cat")
-    risk_df = Relevel(risk_df)(prefix="risk")
+    reference_df = convert_ref_spans(prefix="gold")
+    anon_df = convert_cand_spans(gold=False, prefix="anon")
+    entity_df = convert_cand_spans(gold=False, tag_column_id=2, prefix="entity")
+    risk_df = convert_cand_spans(gold=False, tag_column_id=3, prefix="risk")
 
     # Join span tables
     reference_anon_df = Join(reference_df, anon_df)(on=["start", "end"])
