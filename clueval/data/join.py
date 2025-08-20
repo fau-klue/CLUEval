@@ -3,59 +3,6 @@ import numpy as np
 from typing import List
 
 
-class Relevel:
-    def __init__(self, dataframe: pd.DataFrame, path_to_tag_set: str = None, tag_set: str = "ag"):
-        """
-        Reorder information category.
-        :param dataframe: Input dataframe containing spans
-        :param path_to_tag_set: Path to tags set from resource
-        :param tag_set: Options: 'ag' and 'olg'. Default: 'ag'
-        """
-        self.dataframe = dataframe
-        if path_to_tag_set:
-            self.tags_df = pd.read_csv(path_to_tag_set, delimiter="\t")
-            if tag_set == "ag":
-                self.tags_list = [self.tags_df["label_OLG"].iloc[i] for i, tag in enumerate(self.tags_df["label_AG"])
-                                  if not pd.isnull(tag) and not pd.isnull(self.tags_df["label_OLG"].iloc[i])
-                                  ]
-            if tag_set == "olg":
-                self.tags_list = [tag for tag in self.tags_df["label_OLG"] if not pd.isnull(tag)]
-        else:
-            self.tags_list = []
-
-    def __call__(self, cat: bool = False, prefix: str = "id"):
-        if self.tags_list:
-            dataframe = self._relevel_category(self.dataframe, cat=cat)
-            dataframe = self._assign_span_ids(dataframe, prefix=prefix)
-        else:
-            dataframe = self._assign_span_ids(self.dataframe, prefix=prefix)
-        return dataframe
-
-    def _relevel_category(self, inp_data: pd.DataFrame, cat: bool = False):
-        """
-        Add IDs to information classes to get proper ordering.
-        :param inp_data: Input dataframe containing annotated spans
-        :param cat: Boolean indication for information class
-        """
-        if cat:
-            cat_replacement = {cat: f"0{i+1}_{cat}" if len(str(i+1)) == 1 else f"{i+1}_{cat}"
-                               for i, cat in enumerate(self.tags_list)
-                               }
-            inp_data["cat"] = inp_data.cat.replace(cat_replacement)
-            # inp_data["cat"].replace(cat_replacement, inplace=True)
-        return inp_data
-
-    @staticmethod
-    def _assign_span_ids(inp_data: pd.DataFrame, prefix: str = "id"):
-        """
-        Assign IDs to annotated spans using the given prefix.
-        :param inp_data: Pandas dataframe with extracted spans
-        :param prefix: IDs prefix
-        """
-        inp_data["id"] = [f"{prefix}{i + 1:06d}" for i in range(inp_data.shape[0])]
-        return inp_data
-
-
 class Join:
     def __init__(self, x: pd.DataFrame, y: pd.DataFrame):
         """
