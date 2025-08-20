@@ -10,7 +10,7 @@ class Convert:
     def __init__(self, path_to_file: os.path.abspath):
         self.path_to_file = path_to_file
 
-    def __call__(self, gold=True, tag_column_id: int = 1):
+    def __call__(self, gold=True, tag_column_id: int = 1, prefix: str = "id"):
         # TODO: Refactor this to a cleaner version later
         span_dictionary = dict(start=[],
                                end=[],
@@ -70,7 +70,19 @@ class Convert:
                     span_dictionary["set"].append("test")
                     span_dictionary["verdict"].append(verdict_id)
                     span_dictionary["text"].append(tokens)
-        return pd.DataFrame.from_dict(span_dictionary)
+        dataframe = pd.DataFrame.from_dict(span_dictionary)
+        dataframe = self._assign_span_ids(self.dataframe, prefix=prefix)
+        return dataframe
+    
+    @staticmethod
+    def _assign_span_ids(inp_data: pd.DataFrame, prefix: str = "id"):
+        """
+        Assign IDs to annotated spans using the given prefix.
+        :param inp_data: Pandas dataframe with extracted spans
+        :param prefix: IDs prefix
+        """
+        inp_data["id"] = [f"{prefix}{i + 1:06d}" for i in range(inp_data.shape[0])]
+        return inp_data
 
     @staticmethod
     def _line_generator(read_lines: List):
