@@ -6,7 +6,6 @@ from clueval.data import Convert
 def test_converter(p1):
 
     converter = Convert(p1)
-    print(converter)
     dataframe = converter(prefix="gold")
 
     # test not empty
