@@ -128,7 +128,7 @@ class Join:
         return rest
 
 
-class JoinMultitaskSpans(Join):
+class JoinMultiAnnotations(Join):
     def __init__(self, anon: pd.DataFrame, entity: pd.DataFrame, risk: pd.DataFrame):
         """
         Join anon, entities and risk spans tables into one unified dataframe.
