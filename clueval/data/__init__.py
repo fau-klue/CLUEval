@@ -1,2 +1,2 @@
-from .join import Join, JoinMultitaskSpans
+from .join import Join, JoinMultiAnnotations
 from .spans import Convert
