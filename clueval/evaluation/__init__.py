@@ -2,7 +2,7 @@
 
 import pandas as pd
 
-from ..data import Convert, Join, JoinMultitaskSpans
+from ..data import Convert, Join, JoinMultiAnnotations
 from .metrics import (MetricsForCategoricalSpansAnonymisation,
                       MetricsForSpansAnonymisation)
 
@@ -14,9 +14,9 @@ def evaluate(path_reference, path_candidate):
     reference_df = convert_ref_spans(prefix="gold")
 
     convert_cand_spans = Convert(path_candidate)
-    anon_df = convert_cand_spans(gold=False, tag_column_id=1, prefix="anon")
-    entity_df = convert_cand_spans(gold=False, tag_column_id=2, prefix="entity")
-    risk_df = convert_cand_spans(gold=False, tag_column_id=3, prefix="risk")
+    anon_df = convert_cand_spans(gold=False, tag_column=1, prefix="anon")
+    entity_df = convert_cand_spans(gold=False, tag_column=2, prefix="entity")
+    risk_df = convert_cand_spans(gold=False, tag_column=3, prefix="risk")
 
     # Join span tables
     reference_anon_df = Join(reference_df, anon_df)(on=["start", "end"])
@@ -24,7 +24,7 @@ def evaluate(path_reference, path_candidate):
     reference_risk_df = Join(reference_df, risk_df)(on=["start", "end"])
 
     # Multitask Join
-    all_df = JoinMultitaskSpans(anon_df, entity_df, risk_df)(on=["start", "end"])
+    all_df = JoinMultiAnnotations(anon_df, entity_df, risk_df)(on=["start", "end"])
     reference_all = Join(reference_df, all_df)(on=["start", "end"])
     reference_high_risk = Join(reference_df.loc[reference_df.risk == "hoch"], all_df)(on=["start", "end"])
 
