@@ -10,7 +10,7 @@ class Convert:
     def __init__(self, path_to_file: os.path.abspath):
         self.path_to_file = path_to_file
 
-    def __call__(self, gold=True, tag_column_id: int = 1, prefix: str = "id"):
+    def __call__(self, gold=True, tag_column: int = 1, prefix: str = "id"):
         # TODO: Refactor this to a cleaner version later
         span_dictionary = dict(start=[],
                                end=[],
@@ -35,10 +35,10 @@ class Convert:
                 span_dictionary["text"].append(tokens)
         else:
             # Extract prediction spans
-            if tag_column_id == 1:
+            if tag_column == 1:
                 span_dictionary.pop("cat")
                 span_dictionary.pop("risk")
-                for start_id, end_id, tag, domain, verdict_id, tokens in self.predictions(tag_column_id=tag_column_id):
+                for start_id, end_id, tag, domain, verdict_id, tokens in self.predictions(tag_column=tag_column):
                     span_dictionary["start"].append(start_id)
                     span_dictionary["end"].append(end_id)
                     span_dictionary["anon"].append(tag)
@@ -47,10 +47,10 @@ class Convert:
                     span_dictionary["verdict"].append(verdict_id)
                     span_dictionary["text"].append(tokens)
 
-            if tag_column_id == 2:
+            if tag_column == 2:
                 span_dictionary.pop("anon")
                 span_dictionary.pop("risk")
-                for start_id, end_id, tag, domain, verdict_id, tokens in self.predictions(tag_column_id=tag_column_id):
+                for start_id, end_id, tag, domain, verdict_id, tokens in self.predictions(tag_column=tag_column):
                     span_dictionary["start"].append(start_id)
                     span_dictionary["end"].append(end_id)
                     span_dictionary["cat"].append(tag)
@@ -59,10 +59,10 @@ class Convert:
                     span_dictionary["verdict"].append(verdict_id)
                     span_dictionary["text"].append(tokens)
 
-            if tag_column_id == 3:
+            if tag_column == 3:
                 span_dictionary.pop("anon")
                 span_dictionary.pop("cat")
-                for start_id, end_id, tag, domain, verdict_id, tokens in self.predictions(tag_column_id=tag_column_id):
+                for start_id, end_id, tag, domain, verdict_id, tokens in self.predictions(tag_column=tag_column):
                     span_dictionary["start"].append(start_id)
                     span_dictionary["end"].append(end_id)
                     span_dictionary["risk"].append(tag)
@@ -152,7 +152,7 @@ class Convert:
                             yield start_id, end_id, cat, risk, domain, verdict_id, " ".join(tokens)
                             tokens = []
 
-    def predictions(self, tag_column_id=1):
+    def predictions(self, tag_column=1):
         """
         Extract predicted spans from BIO file.
         Iterate over each line and check whether predicted tag for current lines header is 'O'. If not do:
@@ -162,7 +162,7 @@ class Convert:
             same class. If yes do:
                 - extract token position as end id
                 - return spans information
-        :param tag_column_id: Indicates which prediction class should be extracted.
+        :param tag_column: Indicates which prediction class should be extracted.
         Options: 1: anon, 2: entity classes and 3: risk. Default: 1
         """
         with open(self.path_to_file, "r", encoding="utf-8") as in_f:
@@ -191,10 +191,10 @@ class Convert:
                     current_line = current_line.split("\t")
                     next_line = read_lines[i + 1].strip().split("\t")
                     # Start processing line if current tag is not "O"
-                    if current_line[tag_column_id] != "O":
+                    if current_line[tag_column] != "O":
                         verdict_id = current_line[-1].lower()
                         domain = current_line[-2].lower()
-                        tag = re.sub(r"^(B-)|^(I-)", "", current_line[tag_column_id])
+                        tag = re.sub(r"^(B-)|^(I-)", "", current_line[tag_column])
                         tokens.append(current_line[0])
                         try:
                             if not tags_list:
@@ -202,9 +202,9 @@ class Convert:
                                 start_id = token_id
                                 tags_list.append(tag)
                             # Generate current span
-                            if (next_line[tag_column_id].startswith("O")  # If next tag is 'O'
-                                    or next_line[tag_column_id].startswith("B-")  # If new span (start with 'B-'
-                                    or re.sub(r"^(B-)|^(I-)", "", next_line[tag_column_id]) != tag
+                            if (next_line[tag_column].startswith("O")  # If next tag is 'O'
+                                    or next_line[tag_column].startswith("B-")  # If new span (start with 'B-'
+                                    or re.sub(r"^(B-)|^(I-)", "", next_line[tag_column]) != tag
                                     # If new tag starts with 'I-' instead of 'B-'
                             ):
                                 end_id = token_id
