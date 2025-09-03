@@ -28,13 +28,12 @@ class Join:
         all_df[[f"start{suffixes[1]}", f"end{suffixes[1]}"]] = all_df[["start", "end"]].where(
             all_df["status"] == "TP", all_df[[f"start{suffixes[1]}", f"end{suffixes[1]}"]].values
         )
-        all_df[["domain", "set"]] = all_df[[f"domain{suffixes[1]}", f"set{suffixes[1]}"]].where(
-            all_df["status"] == "FP", all_df[["domain", "set"]].values
+        all_df[["domain"]] = all_df[[f"domain{suffixes[1]}"]].where(
+            all_df["status"] == "FP", all_df[["domain"]].values
         )
-        all_df["verdict"] = all_df[f"verdict{suffixes[1]}"].where(all_df["verdict"].isna(), all_df["verdict"].values)
+        all_df["doc_id"] = all_df[f"doc_id{suffixes[1]}"].where(all_df["doc_id"].isna(), all_df["doc_id"].values)
         all_df.drop(columns=[f"domain{suffixes[1]}",
-                             f"set{suffixes[1]}",
-                             f"verdict{suffixes[1]}",
+                             f"doc_id{suffixes[1]}",
                              "id_L",
                              "id_R"], inplace=True)
 
@@ -68,13 +67,15 @@ class Join:
         rest_y = rest_y.assign(id_L=["" for _ in range(rest_y.shape[0])])
         # Apply _get_overlap() function to extract partial matches between rest_x and rest_y
         # Join both tables to a unified one afterward
-        rest_x, rest_y = self._get_overlaps(rest_x, rest_y)
-        # Handle ValueError when reference and prediction yield the same spans 
-        if not rest_x.empty and not rest_y.empty: 
+
+        # Handle ValueError when reference and prediction yield the same spans
+        if not rest_x.empty and not rest_y.empty:
+            rest_x, rest_y = self._get_overlaps(rest_x, rest_y)
             rest = rest_x.merge(rest_y, left_on="id_R", right_on="id", how="outer", suffixes=suffixes)
         else:
             # Merge empty dataframes -> no rest matching
-            rest = pd.merge(rest_x, rest_y, on="id", suffixes=suffixes)
+            rest = rest_x.merge(rest_y, on="id", how="outer", suffixes=suffixes)
+            rest[f"id{suffixes[1]}"] = None
         return self._assign_status_to_rest_match(rest)
 
     @staticmethod
@@ -89,16 +90,13 @@ class Join:
         """
         # Check whether there is at least one overlapping between left and right
         for i in range(left.shape[0]):
-            overlap = np.maximum(0, np.minimum(left.end.iloc[i], right.end) - np.maximum(left.start.iloc[i],
-                                                                                         right.start) + 1)
+            overlap = np.maximum(0, np.minimum(left.end.iloc[i], right.end) - np.maximum(left.start.iloc[i], right.start) + 1)
             # Get id for overlapping if exists
             if max(overlap) > 0:
                 id_max_overlap = overlap.idxmax()
                 # Assign span id from right to corresponded span from left
-                # left.id_R.iloc[i] = right.id.iloc[id_max_overlap]
                 left.loc[i, "id_R"] = right.id.iloc[id_max_overlap]
                 # Assign span id from left to corresponded span from right
-                # right.id_L.iloc[id_max_overlap] = left.id.iloc[i]
                 right.loc[id_max_overlap, "id_L"] = left.id.iloc[i]
         return left, right
 
@@ -118,65 +116,59 @@ class Join:
             elif pd.isna(rest.id.iloc[i]):
                 status[i] = "FP"
             else:
-                # Subset: start left is higher than or equals right and end left is smaller than or equals right
+                # Subset: start left >= start right and end left <= right
                 if status[i] == "overlap" and rest.start.iloc[i] >= rest.start_Y.iloc[i] and rest.end.iloc[i] <= rest.end_Y.iloc[i]:
                     status[i] = "sub"
-                # Super: start left is smaller than or equals right and end left higher than or equals right
+                # Super: start left <= start right and end left >= right
                 elif status[i] == "overlap" and rest.start.iloc[i] <= rest.start_Y.iloc[i] and rest.end.iloc[i] >= rest.end_Y.iloc[i]:
                     status[i] = "super"
         rest = rest.assign(status=status)
         return rest
 
 
-class JoinMultiAnnotations(Join):
-    def __init__(self, anon: pd.DataFrame, entity: pd.DataFrame, risk: pd.DataFrame):
-        """
-        Join anon, entities and risk spans tables into one unified dataframe.
-        :param anon: Anon spans
-        :param entity: Entity spans
-        :param risk: risk spans
-        """
-        super().__init__(anon, entity)
-        self.risk = risk
+class JoinAnnotationLayers(Join):
+    def __int__(self, x: pd.DataFrame, y: pd.DataFrame):
+        super().__init__(x, y)
 
-    def __call__(self, on: str | List[str], how: str = "inner", suffixes: tuple = ("", "_Y")):
-        """
-        :param on: Column or columns for joining
-        :param how: Join strategy. Options: 'left', 'inner'. Default: 'inner'
-        :param suffixes: Columns suffixes after joining tables
-        """
-        # Firstly, predictions for anon and information classes are joined
-        anon_cat = super().__call__(on=on, how=how, suffixes=suffixes)
+    def __call__(self, lcat: str, rcat: str, on: str| List[str], how="inner", suffixes: tuple=("", "_Y")):
+        exact = self.get_exact_match(on=on, how=how, suffixes=suffixes)
+        rest = self.match_rest(exact)
         # Get partial matches for anon_cat
-        anon_cat[["start", "end", "text"]] = anon_cat[[f"start{suffixes[1]}", f"end{suffixes[1]}", f"text{suffixes[1]}"]].where(
-            anon_cat.status == "sub", anon_cat[["start", "end", "text"]].values
+        rest[["start", "end", "text"]] = rest[
+            [f"start{suffixes[1]}", f"end{suffixes[1]}", f"text{suffixes[1]}"]].where(
+            rest.status == "sub", rest[["start", "end", "text"]].values
         )
-        # Fill in some information for spans found by only one of the models
-        # Assign "00_ANY" as new category to anon_cat table. This class indicates that an anonymisation span has
-        # been predicted but not information class.
-        cols = ["start", "end", "text", "id", "anon"]
-        source_cols = [f"start{suffixes[1]}", f"end{suffixes[1]}", f"text{suffixes[1]}", f"id{suffixes[1]}", "anon"]
+        # Drop NaN by start and end ids
+        # rest = rest.dropna(subset=["start", "end"])
+        # Fill category columns with information if NaN
+        # rest[lcat] = rest[lcat].fillna(lcat)
 
-        for col, source_col in zip(cols, source_cols):
-            anon_cat[col] = np.where(anon_cat.status == "FP", anon_cat[source_col], anon_cat[col])
+        # Concatenate both dataframes to a single one
+        concatenated = pd.concat([exact, rest])
 
-        # anon_cat["cat"].loc[anon_cat.status == "FN"] = "00_Any"
-        anon_cat.loc[anon_cat.status == "FN", "cat"] = "00_Any"
-        # Reorder spans based on position ids and remove duplications if exist -> Remove nested spans and keep longer
-        # spans
-        anon_cat = anon_cat.sort_values(by=["start", "end"], ascending=[True, False])
-        anon_cat = anon_cat.loc[~anon_cat.duplicated(subset="start")].loc[~anon_cat.duplicated(subset="end")]
-        while any(anon_cat.end.shift() >= anon_cat.start):
-            anon_cat = anon_cat.loc[~(anon_cat.end.shift(fill_value=True) >= anon_cat.start)].reset_index(drop=True)
-        assert not any(anon_cat.end.shift() >= anon_cat.start)  # This assertion should check whether the spans are correctly sorted
-        anon_cat.drop(columns=["status", f"start{suffixes[1]}", f"end{suffixes[1]}", f"id{suffixes[1]}", f"text{suffixes[1]}"], inplace=True)
+        # Fill in some information for spans found by only one of the classification header.
+        # If status is FP (exists only in the right table), copy values from right column to corresponding left column
+        # only if left value is NaN and right value doesn't exist in the left column
+        left_columns = ["start", "end", "text", "id", lcat]
+        right_columns = [f"start{suffixes[1]}", f"end{suffixes[1]}", f"text{suffixes[1]}", f"id{suffixes[1]}"]
+        for lcol, rcol in zip(left_columns, right_columns):
+            concatenated[lcol] = np.where(concatenated.status == "FP", concatenated[rcol], concatenated[lcol])
+        concatenated.loc[concatenated.status == "FN", rcat] = "Any"
 
-        # Secondly, join Anon-Entity table with Risk spans
-        super().__init__(anon_cat, self.risk)
-        all_df = super().__call__(on=on, suffixes=suffixes)
-        all_df = all_df.loc[all_df.status != "FP"]
-        # Add 'Any' annotation to existing spans
-        # all_df["risk"].loc[all_df.status == "FN"] = "00_Any"
-        all_df.loc[all_df.status == "FN", "risk"] = "00_Any"
-        all_df.drop(columns=[f"text{suffixes[1]}", f"id{suffixes[1]}", f"start{suffixes[1]}", f"end{suffixes[1]}"], inplace=True)
+        all_df = (concatenated.sort_values(by=["start", "end"], ascending=[True, False])).reset_index(drop=True)
+        all_df = all_df.loc[~all_df.duplicated(subset="start")].loc[~all_df.duplicated(subset="end")]
+
+        all_df.reset_index(drop=True, inplace=True)
+        all_df.loc[all_df.status == "FN", rcat] = "Any"
+        all_df = all_df.drop(columns=["status",
+                                  f"start{suffixes[1]}",
+                                  f"end{suffixes[1]}",
+                                  f"id{suffixes[1]}",
+                                  f"text{suffixes[1]}",
+                                  f"domain{suffixes[1]}",
+                                  f"doc_id{suffixes[1]}",
+                                  "id_L",
+                                  "id_R",
+                                  "status"]
+                         )
         return all_df
