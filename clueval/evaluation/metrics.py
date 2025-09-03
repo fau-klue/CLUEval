@@ -28,7 +28,7 @@ class Metrics(ABC):
 
 class MetricsForSpansAnonymisation(Metrics):
     def __init__(self, spans_df: pd.DataFrame):
-        self.spans_df = spans_df[spans_df.status != "overlap"]
+        self.spans_df = spans_df.loc[~((spans_df.start.isna()) & (spans_df.status == "overlap"))]
 
     def __call__(self, lenient: bool = False, row_name: str = None):
         """
