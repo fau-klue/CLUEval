@@ -28,7 +28,7 @@ class Metrics(ABC):
 
 class MetricsForSpansAnonymisation(Metrics):
     def __init__(self, spans_df: pd.DataFrame):
-        self.spans_df = spans_df
+        self.spans_df = spans_df[spans_df.status != "overlap"]
 
     def __call__(self, lenient: bool = False, row_name: str = None):
         """
@@ -48,10 +48,13 @@ class MetricsForSpansAnonymisation(Metrics):
 
         n_left_spans = self.spans_df[self.spans_df.status != "FP"]["status"].count()
         n_right_spans = self.spans_df[self.spans_df.status != "FN"]["status"].count()
+        # Lenient will also accept overlapped spans for computing Precision and Recall
         if lenient:
+            # True positives cases for Precision: TPs + gold annotation that are longer than predictions
             tp_precision = self.spans_df[self.spans_df.status.str.contains("TP|super")]["status"].count()
+            # True positives cases for Recall: TPs + predictions that are longer than reference
             tp_recall = self.spans_df[self.spans_df.status.str.contains("TP|sub")]["status"].count()
-
+            # Compute metrics
             metrics["P"] = self.precision(tp_precision, n_right_spans)
             metrics["R"] = self.recall(tp_recall, n_left_spans)
             metrics["F1"] = self.f1(metrics["P"], metrics["R"])
@@ -59,7 +62,6 @@ class MetricsForSpansAnonymisation(Metrics):
             metrics["FP"] = n_right_spans - tp_precision
         else:
             tp = self.spans_df[self.spans_df.status == "TP"]["status"].count()
-
             metrics["P"] = self.precision(tp, n_right_spans)
             metrics["R"] = self.recall(tp, n_left_spans)
             metrics["F1"] = self.f1(metrics["P"], metrics["R"])

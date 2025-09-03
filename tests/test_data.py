@@ -6,14 +6,26 @@ from clueval.data import Convert
 def test_converter(p1):
 
     converter = Convert(p1)
-    dataframe = converter(prefix="gold")
+    print(converter)
+    df1 = converter(tag_column=1, tag_name="layer1", prefix="reference")
+    df2 = converter(tag_column=2, tag_name="layer2", prefix="reference")
+    df3 = converter(tag_column=3, tag_name="layer3", prefix="reference")
+
 
     # test not empty
-    assert dataframe.shape[0] != 0
+    assert df1.shape[0] != 0
+    assert df2.shape[0] != 0
+    assert df3.shape[0] != 0
 
     # test required columns
-    required_columns = ['start', 'end', 'cat', 'risk', 'domain', 'set', 'verdict', 'text', 'id']
-    assert dataframe.columns.tolist() == required_columns
+    df1_required_columns = ['start', 'end', 'text', 'layer1', 'doc_id', 'domain', 'id']
+    assert sorted(df1.columns.tolist()) == sorted(df1_required_columns)
+
+    df2_required_columns = ['start', 'end', 'text', 'layer2', 'doc_id', 'domain', 'id']
+    assert sorted(df2.columns.tolist()) == sorted(df2_required_columns)
+
+    df3_required_columns = ['start', 'end', 'text', 'layer3', 'doc_id', 'domain', 'id']
+    assert sorted(df3.columns.tolist()) == sorted(df3_required_columns)
 
     # test id prefix
-    assert dataframe["id"][0].startswith("gold")
+    assert df1["id"][0].startswith("reference")
