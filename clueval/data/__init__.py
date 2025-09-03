@@ -1,2 +1,2 @@
-from .join import Join, JoinMultiAnnotations
+from .join import Join, JoinAnnotationLayers
 from .spans import Convert
