@@ -16,4 +16,5 @@ build/
 
 *~
 venv/
-
+debug.py
+.idea
