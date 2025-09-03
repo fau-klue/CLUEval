@@ -10,70 +10,84 @@ class Convert:
     def __init__(self, path_to_file: os.path.abspath):
         self.path_to_file = path_to_file
 
-    def __call__(self, gold=True, tag_column: int = 1, prefix: str = "id"):
-        # TODO: Refactor this to a cleaner version later
-        span_dictionary = dict(start=[],
-                               end=[],
-                               anon=[],
-                               cat=[],
-                               risk=[],
-                               domain=[],
-                               set=[],
-                               verdict=[],
-                               text=[]
-                               )
-        if gold:
-            span_dictionary.pop("anon")
-            for start_id, end_id, cat, risk, domain, verdict_id, tokens in self.gold():
-                span_dictionary["start"].append(start_id)
-                span_dictionary["end"].append(end_id)
-                span_dictionary["cat"].append(cat)
-                span_dictionary["risk"].append(risk)
-                span_dictionary["domain"].append(domain)
-                span_dictionary["set"].append("test")
-                span_dictionary["verdict"].append(verdict_id)
-                span_dictionary["text"].append(tokens)
-        else:
-            # Extract prediction spans
-            if tag_column == 1:
-                span_dictionary.pop("cat")
-                span_dictionary.pop("risk")
-                for start_id, end_id, tag, domain, verdict_id, tokens in self.predictions(tag_column=tag_column):
-                    span_dictionary["start"].append(start_id)
-                    span_dictionary["end"].append(end_id)
-                    span_dictionary["anon"].append(tag)
-                    span_dictionary["domain"].append(domain)
-                    span_dictionary["set"].append("test")
-                    span_dictionary["verdict"].append(verdict_id)
-                    span_dictionary["text"].append(tokens)
-
-            if tag_column == 2:
-                span_dictionary.pop("anon")
-                span_dictionary.pop("risk")
-                for start_id, end_id, tag, domain, verdict_id, tokens in self.predictions(tag_column=tag_column):
-                    span_dictionary["start"].append(start_id)
-                    span_dictionary["end"].append(end_id)
-                    span_dictionary["cat"].append(tag)
-                    span_dictionary["domain"].append(domain)
-                    span_dictionary["set"].append("test")
-                    span_dictionary["verdict"].append(verdict_id)
-                    span_dictionary["text"].append(tokens)
-
-            if tag_column == 3:
-                span_dictionary.pop("anon")
-                span_dictionary.pop("cat")
-                for start_id, end_id, tag, domain, verdict_id, tokens in self.predictions(tag_column=tag_column):
-                    span_dictionary["start"].append(start_id)
-                    span_dictionary["end"].append(end_id)
-                    span_dictionary["risk"].append(tag)
-                    span_dictionary["domain"].append(domain)
-                    span_dictionary["set"].append("test")
-                    span_dictionary["verdict"].append(verdict_id)
-                    span_dictionary["text"].append(tokens)
+    def __call__(self, tag_column: int = 1, tag_name: str = "ner_tags", domain_column: int = None, prefix: str = "id"):
+        span_dictionary = {"start": [],
+                           "end": [],
+                           "text": [],
+                           f"{tag_name}": [],
+                           "doc_id": [],
+                           "domain": []
+                           }
+        # Extract spans from BIO
+        domain_dict = {"domain": []}
+        for start_id, end_id, tag, domain, doc_id, tokens in self.to_span(tag_column=tag_column, domain_column=domain_column):
+            span_dictionary["start"].append(start_id)
+            span_dictionary["end"].append(end_id)
+            span_dictionary["text"].append(tokens)
+            span_dictionary[f"{tag_name}"].append(tag)
+            span_dictionary["doc_id"].append(doc_id)
+            span_dictionary["domain"].append(domain)
         dataframe = pd.DataFrame.from_dict(span_dictionary)
         dataframe = self._assign_span_ids(dataframe, prefix=prefix)
         return dataframe
-    
+
+
+    def to_span(self, tag_column=1, domain_column: int = None):
+        """
+        Extract predicted spans from BIO file.
+        Iterate over each line and check whether predicted tag for current lines header is 'O'. If not do:
+            - extract domain, predicted tag and token from line
+            - extract token position as start id
+            - check if next predicted tag is also 'O', begin of new tag or inside ('I-') span but doesn't have the
+            same class. If yes do:
+                - extract token position as end id
+                - return spans information
+        """
+        # TODO: Simplify this part for more clarity
+        with open(self.path_to_file, "r", encoding="utf-8") as in_f:
+            lines = [line.strip() for line in in_f.readlines() if line.strip()]
+            token_id, start_id = 0, 0
+            tokens, labels = [], []
+            domain, doc_id = None, None
+
+            for i, current_line in enumerate(lines):
+                # Extract verdict id if available
+                doc_id = current_line.split("=")[1] if "newdoc id" in current_line else None
+                current_line = current_line.strip().split("\t")
+                # Extract next line if possible
+                try:
+                    next_line = lines[i + 1].strip().split("\t")
+                except IndexError:
+                    next_line = []
+                # Merge single tokens to annotated spans
+                if len(current_line) > 1:
+                    token_id += 1
+                    token = current_line[0]
+                    current_tag = current_line[tag_column]
+                    # Start processing line if current tag is not "O"
+                    if current_tag != "O":
+                        if domain_column is not None:
+                            domain = current_line[domain_column].lower()
+                        tokens.append(current_line[0])
+                        label = re.sub(r"^[BI]-", "", current_tag)
+                        if not labels:
+                            # Begin of current span
+                            start_id = token_id
+                            labels.append(label)
+                        # Extract next label for comparison
+                        if len(next_line) > 1:
+                            next_tag = next_line[tag_column]
+                            next_label = re.sub(r"^[BI]-", "", next_tag)
+                        # Generate current span if next tag is 'O', if new span starts with 'B-' or
+                        # if new entity tag -> Doesn't matter if it starts with 'I-' instead of 'B-'
+                        if len(next_line) == 1 or (next_tag.startswith("O") or next_tag.startswith("B-") or next_label != label):
+                            yield start_id, token_id, label, domain, doc_id, " ".join(tokens)
+                            tokens, labels = [], []
+                    else:
+                        if tokens:
+                            yield start_id, token_id, label, domain, doc_id, " ".join(tokens)
+                            tokens, labels = [], []
+
     @staticmethod
     def _assign_span_ids(inp_data: pd.DataFrame, prefix: str = "id"):
         """
@@ -91,130 +105,3 @@ class Convert:
                 yield i, line, read_lines[i + 1]
             except IndexError:
                 yield i, line, None
-
-    def gold(self):
-        """ Extract annotated spans from BIO format and save them as tsv.
-        Iterate over each line in BIO and check whether current annotation is 'O'. If not do:
-            - extract domain, token and check whether current line begins a new span. If yes do:
-                - extract entity classes and risks
-                - get token position as start id
-                - check if next line is outside or new span. If yes do:
-                    - get token position as end id and return spans information
-        Check whether current line is inside an existing span and next line is either outside or begin of new one.
-        If yes do:
-            - Extract token position and return spans information
-        """
-        with (open(self.path_to_file, "r", encoding="utf-8") as in_f):
-            read_lines = in_f.readlines()
-            token_id = 0
-            start_id = 0
-            end_id = 0
-            domain = None
-            cat = None
-            risk = None
-            verdict_id = None
-            tokens = []
-
-            for i, line in enumerate(read_lines):
-                current_line = line.strip()
-                # Extract verdict id from document
-                if "newdoc id" in current_line:
-                    verdict_id = current_line.split("=")[1]
-                # Ignore document, sentence id and empty string
-                if ("newdoc id" not in current_line and
-                        "sent_id" not in current_line and
-                        current_line != ""):
-                    token_id += 1
-                    try:
-                        current_line = current_line.split("\t")
-                        next_line = read_lines[i + 1].strip().split("\t")
-                        if current_line[1] != "O":
-                            domain = current_line[-1].lower()
-                            tokens.append(current_line[0])
-                            if current_line[1].startswith("B-"):
-                                cat = current_line[2].strip("B-")
-                                risk = current_line[3].strip("B-")
-                                start_id = token_id
-                                if (next_line[1].startswith("B-")
-                                        or next_line[1] == "O"):
-                                    end_id = token_id
-                                    yield start_id, end_id, cat, risk, domain, verdict_id, " ".join(tokens)
-                                    tokens = []
-                        if current_line[1].startswith("I-") and (
-                                "B-" in next_line[1] or
-                                "O" in next_line[1]):
-                            end_id = token_id
-                            yield start_id, end_id, cat, risk, domain, verdict_id, " ".join(tokens)
-                            tokens = []
-                    except IndexError:
-                        if tokens:
-                            end_id = token_id
-                            yield start_id, end_id, cat, risk, domain, verdict_id, " ".join(tokens)
-                            tokens = []
-
-    def predictions(self, tag_column=1):
-        """
-        Extract predicted spans from BIO file.
-        Iterate over each line and check whether predicted tag for current lines header is 'O'. If not do:
-            - extract domain, predicted tag and token from line
-            - extract token position as start id
-            - check if next predicted tag is also 'O', begin of new tag or inside ('I-') span but doesn't have the
-            same class. If yes do:
-                - extract token position as end id
-                - return spans information
-        :param tag_column: Indicates which prediction class should be extracted.
-        Options: 1: anon, 2: entity classes and 3: risk. Default: 1
-        """
-        with open(self.path_to_file, "r", encoding="utf-8") as in_f:
-            read_lines = in_f.readlines()
-            token_id = 0
-            start_id = 0
-            end_id = 0
-            verdict_id = None
-            domain = None
-            tags_list = []
-            tokens = []
-
-            for i, line in enumerate(read_lines):
-                current_line = line.strip()
-
-                # Extract verdict id if available
-                if "newdoc id" in current_line:
-                    verdict_id = current_line.split("=")[1]
-
-                # Extract predicted spans
-                if ("newdoc id" not in current_line
-                        and "sent_id" not in current_line
-                        and current_line != ""
-                ):
-                    token_id += 1
-                    current_line = current_line.split("\t")
-                    next_line = read_lines[i + 1].strip().split("\t")
-                    # Start processing line if current tag is not "O"
-                    if current_line[tag_column] != "O":
-                        verdict_id = current_line[-1].lower()
-                        domain = current_line[-2].lower()
-                        tag = re.sub(r"^(B-)|^(I-)", "", current_line[tag_column])
-                        tokens.append(current_line[0])
-                        try:
-                            if not tags_list:
-                                # Begin of current span
-                                start_id = token_id
-                                tags_list.append(tag)
-                            # Generate current span
-                            if (next_line[tag_column].startswith("O")  # If next tag is 'O'
-                                    or next_line[tag_column].startswith("B-")  # If new span (start with 'B-'
-                                    or re.sub(r"^(B-)|^(I-)", "", next_line[tag_column]) != tag
-                                    # If new tag starts with 'I-' instead of 'B-'
-                            ):
-                                end_id = token_id
-                                yield start_id, end_id, tag, domain, verdict_id, " ".join(tokens)
-                                tokens = []
-                                tags_list = []
-                        except IndexError:
-                            # Mostly due do last line
-                            if tokens:
-                                end_id = token_id
-                                yield start_id, end_id, tag, domain, verdict_id, " ".join(tokens)
-                                tokens = []
-                                tags_list = []
