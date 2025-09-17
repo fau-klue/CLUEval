@@ -10,7 +10,7 @@ def evaluate(path_reference:str,
              domain_column: int | None=None,
              filter_column: str | None = None,
              filter_value: str | None = None,
-             categorical_evaluation: bool = True
+             categorical_evaluation: bool = False
              ):
     if not annotation_layer:
         raise ValueError("No input for annotation_layer")
