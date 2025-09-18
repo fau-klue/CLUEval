@@ -3,6 +3,7 @@ from typing import List
 import numpy as np
 import pandas as pd
 
+pd.set_option("future.no_silent_downcasting", True)
 
 class Join:
     def __init__(self, x: pd.DataFrame, y: pd.DataFrame):
