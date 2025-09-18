@@ -23,8 +23,32 @@ positional arguments:
 
 options:
   -h, --help  show this help message and exit
+  -v, --version         output version information and exit
+  -a ANNOTATION_LAYERS [ANNOTATION_LAYERS ...], --annotation_layers ANNOTATION_LAYERS [ANNOTATION_LAYERS ...]
+                        Input names for annotation layers. (default: None)
+  -d DOMAIN_COLUMN, --domain_column DOMAIN_COLUMN
+                        Column ID for domain information. (default: None)
+  -fc FILTER_COLUMN, --filter_column FILTER_COLUMN
+                        Column name for filtering. (default: None)
+  -fv FILTER_VALUE, --filter_value FILTER_VALUE
+                        Filter column by value. (default: None)
+  -ce, --categorical_eval
+                        Compute metrics for each category. (default: False)
 ```
-#### Example
+### Examples
+#### Single layer evaluation
 ```sh
-cluevaluate <REFERENCE> <PREDICTION>
+cluevaluate <REFERENCE> <PREDICTION> -a ner_tags
+```
+#### Multi-layer evaluation
+```sh
+cluevaluate <REFERENCE> <PREDICTION> -a ner_tags ner_tags2
+```
+#### Conditional evaluation
+```sh
+cluevaluate <REFERENCE> <PREDICTION> -a ner_tags ner_tags2 -fc ner_tags2 -fv PERSON
+```
+#### Detailed evaluation
+```sh
+cluevaluate <REFERENCE> <PREDICTION> -a ner_tags ner_tags2 --ce
 ```
