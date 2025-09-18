@@ -16,11 +16,11 @@ def arguments():
 
     parser.add_argument("reference", help="Path to reference file.")
     parser.add_argument("candidate", help="Path to candidate or prediction file.")
-    parser.add_argument("--annotation_layers", "-a", nargs="+", type=str, default=None, help="Input names for annotation layers.")
-    parser.add_argument("--domain_column", "-d", type=int, default=None, help="Column ID for domain information.")
-    parser.add_argument("--filter_column", "-fc", type=str, default=None, help="Column name for filtering.")
-    parser.add_argument("--filter_value", "-fv", type=str, default=None, help="Filter column by value.")
-    parser.add_argument("--categorical_eval", "-ce", action="store_true", help="Compute metrics for each category.")
+    parser.add_argument("-a", "--annotation_layers", nargs="+", type=str, default=None, help="Input names for annotation layers.")
+    parser.add_argument("-d", "--domain_column", type=int, default=None, help="Column ID for domain information.")
+    parser.add_argument("-fc", "--filter_column", type=str, default=None, help="Column name for filtering.")
+    parser.add_argument("-fv", "--filter_value", type=str, default=None, help="Filter column by value.")
+    parser.add_argument("-ce", "--categorical_eval", action="store_true", help="Compute metrics for each category.")
     return parser.parse_args()
 
 
