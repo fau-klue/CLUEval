@@ -32,7 +32,7 @@ class Convert:
         return dataframe
 
 
-    def to_span(self, tag_column=1, domain_column: int = None):
+    def to_span(self, tag_column=1, domain_column: int = None, doc_id_column: int = None):
         """
         Extract predicted spans from BIO file.
         Iterate over each line and check whether predicted tag for current lines header is 'O'. If not do:
@@ -51,9 +51,11 @@ class Convert:
             domain, doc_id = None, None
 
             for i, current_line in enumerate(lines):
-                # Extract verdict id if available
+                # Extract document id if available
                 if "newdoc id" in current_line:
                     doc_id = current_line.split("=")[1].strip()
+                if doc_id_column:
+                    doc_id = doc_id_column
                 current_line = current_line.strip().split("\t")
                 # Extract next line if possible
                 try:
