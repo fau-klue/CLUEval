@@ -52,7 +52,8 @@ class Convert:
 
             for i, current_line in enumerate(lines):
                 # Extract verdict id if available
-                doc_id = current_line.split("=")[1] if "newdoc id" in current_line else None
+                if "newdoc id" in current_line:
+                    doc_id = current_line.split("=")[1].strip()
                 current_line = current_line.strip().split("\t")
                 # Extract next line if possible
                 try:
