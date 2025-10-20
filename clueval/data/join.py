@@ -160,6 +160,7 @@ class JoinAnnotationLayers(Join):
 
         all_df.reset_index(drop=True, inplace=True)
         all_df.loc[all_df.status == "FN", rcat] = "Any"
+        all_df["doc_id"] = all_df[f"doc_id{suffixes[1]}"].where(all_df["doc_id"].isna(), all_df["doc_id"].values)
         all_df = all_df.drop(columns=["status",
                                   f"start{suffixes[1]}",
                                   f"end{suffixes[1]}",
