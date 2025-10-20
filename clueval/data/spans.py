@@ -58,7 +58,7 @@ class Convert:
                     doc_id = current_line.split("=")[1].strip()
                 else:
                     if doc_id_column:
-                        doc_id = current_line.strip().split("\t")[doc_id_column]
+                        doc_id = current_line.strip().split("\t")[doc_id_column].strip()
                 current_line = current_line.strip().split("\t")
                 # Extract next line if possible
                 try:
