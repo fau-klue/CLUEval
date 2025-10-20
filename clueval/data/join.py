@@ -34,7 +34,6 @@ class Join:
         )
         all_df["doc_id"] = all_df[f"doc_id{suffixes[1]}"].where(all_df["doc_id"].isna(), all_df["doc_id"].values)
         all_df.drop(columns=[f"domain{suffixes[1]}",
-                             f"doc_id{suffixes[1]}",
                              "id_L",
                              "id_R"], inplace=True)
 
