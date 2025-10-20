@@ -10,7 +10,7 @@ class Convert:
     def __init__(self, path_to_file: os.path.abspath):
         self.path_to_file = path_to_file
 
-    def __call__(self, tag_column: int = 1, tag_name: str = "ner_tags", domain_column: int = None, prefix: str = "id"):
+    def __call__(self, tag_column: int = 1, tag_name: str = "ner_tags", domain_column: int = None, doc_id_column: int = None, prefix: str = "id"):
         span_dictionary = {"start": [],
                            "end": [],
                            "text": [],
@@ -20,7 +20,9 @@ class Convert:
                            }
         # Extract spans from BIO
         domain_dict = {"domain": []}
-        for start_id, end_id, tag, domain, doc_id, tokens in self.to_span(tag_column=tag_column, domain_column=domain_column):
+        for start_id, end_id, tag, domain, doc_id, tokens in self.to_span(tag_column=tag_column,
+                                                                          domain_column=domain_column,
+                                                                          doc_id_column=doc_id_column):
             span_dictionary["start"].append(start_id)
             span_dictionary["end"].append(end_id)
             span_dictionary["text"].append(tokens)
