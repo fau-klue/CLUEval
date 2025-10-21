@@ -146,6 +146,9 @@ class JoinAnnotationLayers(Join):
         # Concatenate both dataframes to a single one
         concatenated = pd.concat([exact, rest])
 
+        # Convert dtypes for start and end to floating points
+        concatenated[["start", "end"]] = concatenated[["start", "end"]].astype(float)
+
         # Fill in some information for spans found by only one of the classification header.
         # If status is FP (exists only in the right table), copy values from right column to corresponding left column
         # only if left value is NaN and right value doesn't exist in the left column
