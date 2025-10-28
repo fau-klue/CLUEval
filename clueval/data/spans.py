@@ -47,19 +47,20 @@ class Convert:
         """
         # TODO: Simplify this part for more clarity
         with open(self.path_to_file, "r", encoding="utf-8") as in_f:
-            lines = [line.strip() for line in in_f.readlines() if line.strip()]
+            lines = in_f.readlines() # [line.strip() for line in in_f.readlines() if line.strip()]
             token_id, start_id = 0, 0
             tokens, labels = [], []
             domain, doc_id = None, None
 
-            for i, current_line in enumerate(lines):
+            for i, line in enumerate(lines):
                 # Extract document id if available
+                current_line = line.strip()
                 if "newdoc id" in current_line:
                     doc_id = current_line.split("=")[1].strip()
                 else:
                     if doc_id_column:
                         doc_id = current_line.strip().split("\t")[doc_id_column].strip()
-                current_line = current_line.strip().split("\t")
+                current_line = current_line.split("\t")
                 # Extract next line if possible
                 try:
                     next_line = lines[i + 1].strip().split("\t")
@@ -68,7 +69,6 @@ class Convert:
                 # Merge single tokens to annotated spans
                 if len(current_line) > 1:
                     token_id += 1
-                    token = current_line[0]
                     current_tag = current_line[tag_column]
                     # Start processing line if current tag is not "O"
                     if current_tag != "O":
@@ -86,7 +86,7 @@ class Convert:
                             next_label = re.sub(r"^[BI]-", "", next_tag)
                         # Generate current span if next tag is 'O', if new span starts with 'B-' or
                         # if new entity tag -> Doesn't matter if it starts with 'I-' instead of 'B-'
-                        if len(next_line) == 1 or (next_tag.startswith("O") or next_tag.startswith("B-") or next_label != label):
+                        if len(next_line) == 1 or next_line == [] or next_label != label:
                             yield start_id, token_id, label, domain, doc_id, " ".join(tokens)
                             tokens, labels = [], []
                     else:
