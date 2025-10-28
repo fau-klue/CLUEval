@@ -86,7 +86,7 @@ class Convert:
                             next_label = re.sub(r"^[BI]-", "", next_tag)
                         # Generate current span if next tag is 'O', if new span starts with 'B-' or
                         # if new entity tag -> Doesn't matter if it starts with 'I-' instead of 'B-'
-                        if len(next_line) == 1 or next_line == [] or next_label != label:
+                        if len(next_line) == 1 or next_line == [] or next_tag.startswith("B-") or next_label != label:
                             yield start_id, token_id, label, domain, doc_id, " ".join(tokens)
                             tokens, labels = [], []
                     else:
