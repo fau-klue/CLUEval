@@ -2,6 +2,7 @@ from typing import List
 
 import numpy as np
 import pandas as pd
+from numpy.ma.core import concatenate
 
 pd.set_option("future.no_silent_downcasting", True)
 
@@ -48,7 +49,7 @@ class Join:
         :param y: Input dataframe right
         :param on: List of columns for joining
         :param how: Join strategy. Default: 'inner'. Option: 'left'
-        :param suffixes: Tuple of columns suffixes after merging tables
+        :paraprint(f"Reference: {annotation_layer[i]}")m suffixes: Tuple of columns suffixes after merging tables
         """
         return self.x.merge(self.y, on=on, how=how, suffixes=suffixes).dropna(subset=[f"text{suffixes[1]}"]).assign(
             status="TP")
@@ -143,9 +144,8 @@ class JoinAnnotationLayers(Join):
         # Fill category columns with information if NaN
         # rest[lcat] = rest[lcat].fillna(lcat)
 
-        # Concatenate both dataframes to a single one
+        # Concatenate both dataframes to a single one if rest is not empty (joining gold annotation layers)
         concatenated = pd.concat([exact, rest])
-
         # Convert dtypes for start and end to floating points
         concatenated[["start", "end"]] = concatenated[["start", "end"]].astype(float)
 
@@ -165,14 +165,16 @@ class JoinAnnotationLayers(Join):
         all_df.loc[all_df.status == "FN", rcat] = "Any"
         all_df["doc_id"] = all_df[f"doc_id{suffixes[1]}"].where(all_df["doc_id"].isna(), all_df["doc_id"].values)
         all_df = all_df.drop(columns=["status",
-                                  f"start{suffixes[1]}",
-                                  f"end{suffixes[1]}",
-                                  f"id{suffixes[1]}",
-                                  f"text{suffixes[1]}",
-                                  f"domain{suffixes[1]}",
-                                  f"doc_id{suffixes[1]}",
-                                  "id_L",
-                                  "id_R",
-                                  "status"]
+                                      f"start{suffixes[1]}",
+                                      f"end{suffixes[1]}",
+                                      f"doc_token_id_start{suffixes[1]}",
+                                      f"doc_token_id_end{suffixes[1]}",
+                                      f"id{suffixes[1]}",
+                                      f"text{suffixes[1]}",
+                                      f"domain{suffixes[1]}",
+                                      f"doc_id{suffixes[1]}",
+                                      "id_L",
+                                      "id_R",
+                                      "status"]
                          )
         return all_df
