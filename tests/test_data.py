@@ -18,13 +18,13 @@ def test_converter(p1):
     assert df3.shape[0] != 0
 
     # test required columns
-    df1_required_columns = ['start', 'end', 'text', 'layer1', 'doc_id', 'domain', 'id']
+    df1_required_columns = ['start', 'end', "doc_token_id_start", "doc_token_id_end" 'text', 'layer1', 'doc_id', 'domain', 'id']
     assert sorted(df1.columns.tolist()) == sorted(df1_required_columns)
 
-    df2_required_columns = ['start', 'end', 'text', 'layer2', 'doc_id', 'domain', 'id']
+    df2_required_columns = ['start', 'end', "doc_token_id_start", "doc_token_id_end", 'text', 'layer2', 'doc_id', 'domain', 'id']
     assert sorted(df2.columns.tolist()) == sorted(df2_required_columns)
 
-    df3_required_columns = ['start', 'end', 'text', 'layer3', 'doc_id', 'domain', 'id']
+    df3_required_columns = ['start', 'end', "doc_token_id_start", "doc_token_id_end", 'text', 'layer3', 'doc_id', 'domain', 'id']
     assert sorted(df3.columns.tolist()) == sorted(df3_required_columns)
 
     # test id prefix

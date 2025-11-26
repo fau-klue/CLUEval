@@ -1,0 +1,22 @@
+Henke	B-anon	B-nat-name	B-hoch	Handelssachen_Umwandlungssachen	 olg_0902
+,	I-anon	I-nat-name	I-hoch	Handelssachen_Umwandlungssachen	 olg_0902
+Anton	I-anon	I-nat-name	I-hoch	Handelssachen_Umwandlungssachen	 olg_0902
+,	O	O	O	Handelssachen_Umwandlungssachen	 olg_0902
+Dahlienweg	B-anon	B-address-name	B-hoch	Handelssachen_Umwandlungssachen	 olg_0902
+93	I-anon	I-address-name	I-hoch	Handelssachen_Umwandlungssachen	 olg_0902
+,	I-anon	I-address-name	I-hoch	Handelssachen_Umwandlungssachen	 olg_0902
+44289	I-anon	I-address-name	I-hoch	Handelssachen_Umwandlungssachen	 olg_0902
+Dortmund	I-anon	I-address-name	I-hoch	Handelssachen_Umwandlungssachen	 olg_0902
+
+Esser	B-anon	B-nat-name	B-hoch	Handelssachen_Umwandlungssachen	 olg_0902
+,	I-anon	I-nat-name	I-hoch	Handelssachen_Umwandlungssachen	 olg_0902
+Dieter	I-anon	I-nat-name	I-hoch	Handelssachen_Umwandlungssachen	 olg_0902
+,	O	O	O	Handelssachen_Umwandlungssachen	 olg_0902
+E.	B-anon	B-address-name	B-mittel	Handelssachen_Umwandlungssachen	 olg_0902
+T.	I-anon	I-address-name	I-hoch	Handelssachen_Umwandlungssachen	 olg_0902
+A.	I-anon	I-address-name	I-hoch	Handelssachen_Umwandlungssachen	 olg_0902
+-Hoffmann-Straße	B-anon	B-address-name	B-hoch	Handelssachen_Umwandlungssachen	 olg_0902
+31d	I-anon	I-address-name	I-hoch	Handelssachen_Umwandlungssachen	 olg_0902
+,	I-anon	I-address-name	I-hoch	Handelssachen_Umwandlungssachen	 olg_0902
+82496	I-anon	I-address-name	I-hoch	Handelssachen_Umwandlungssachen	 olg_0902
+Oberau	I-anon	I-address-name	I-hoch	Handelssachen_Umwandlungssachen	 olg_0902
