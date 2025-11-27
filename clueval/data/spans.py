@@ -23,8 +23,8 @@ class Convert:
         # Extract spans from BIO
         domain_dict = {"domain": []}
         for start_id, end_id, doc_token_id_start, doc_token_id_end, tag, domain, doc_id, tokens in self.to_span(tag_column=tag_column,
-                                                                          domain_column=domain_column,
-                                                                          doc_id_column=doc_id_column):
+                                                                                                                domain_column=domain_column,
+                                                                                                                doc_id_column=doc_id_column):
             span_dictionary["start"].append(start_id)
             span_dictionary["end"].append(end_id)
             span_dictionary["doc_token_id_start"].append(doc_token_id_start)
@@ -38,7 +38,7 @@ class Convert:
         return dataframe
 
 
-    def to_span(self, tag_column=1, domain_column: int = None, doc_id_column: int = None, reset_token_id_by_doc:bool=False):
+    def to_span(self, tag_column=1, domain_column: int = None, doc_id_column: int = None):
         """
         Extract predicted spans from BIO file.
         Iterate over each line and check whether predicted tag for current lines header is 'O'. If not do:
@@ -62,16 +62,14 @@ class Convert:
                 if "newdoc id" in current_line:
                     doc_id = current_line.split("=")[1].strip()
                     # Reset token_id when moving to next document and this option is used
-                    if reset_token_id_by_doc:
-                        doc_token_id = 0
+                    doc_token_id = 0
                 else:
                     if doc_id_column:
                         _doc_id = current_line.strip().split("\t")[doc_id_column].strip()
                         # Check if _doc_id != doc_id
                         if _doc_id != "" and _doc_id != doc_id:
                             doc_id = _doc_id
-                            if reset_token_id_by_doc:
-                                doc_token_id = 0
+                            doc_token_id = 0
                 current_line = current_line.split("\t")
                 # Extract next line if possible
                 try:
