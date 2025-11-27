@@ -135,9 +135,11 @@ class JoinAnnotationLayers(Join):
         exact = self.get_exact_match(on=on, how=how, suffixes=suffixes)
         rest = self.match_rest(exact)
         # Get partial matches for anon_cat
-        rest[["start", "end", "text"]] = rest[
-            [f"start{suffixes[1]}", f"end{suffixes[1]}", f"text{suffixes[1]}"]].where(
-            rest.status == "sub", rest[["start", "end", "text"]].values
+        rest[["start", "end", "doc_token_id_start", "doc_token_id_end", "text"]] = rest[
+            [f"start{suffixes[1]}", f"end{suffixes[1]}",
+             f"doc_token_id_start{suffixes[1]}", f"doc_token_id_end{suffixes[1]}",
+             f"text{suffixes[1]}"]].where(
+            rest.status == "sub", rest[["start", "end", "doc_token_id_start", "doc_token_id_end", "text"]].values
         )
         # Drop NaN by start and end ids
         # rest = rest.dropna(subset=["start", "end"])
@@ -152,8 +154,11 @@ class JoinAnnotationLayers(Join):
         # Fill in some information for spans found by only one of the classification header.
         # If status is FP (exists only in the right table), copy values from right column to corresponding left column
         # only if left value is NaN and right value doesn't exist in the left column
-        left_columns = ["start", "end", "text", "id", lcat]
-        right_columns = [f"start{suffixes[1]}", f"end{suffixes[1]}", f"text{suffixes[1]}", f"id{suffixes[1]}"]
+        left_columns = ["start", "end", "doc_token_id_start", "doc_token_id_end", "text", "id", lcat]
+        right_columns = [f"start{suffixes[1]}", f"end{suffixes[1]}",
+                         f"doc_token_id_start{suffixes[1]}", f"doc_token_id_end{suffixes[1]}",
+                         f"text{suffixes[1]}", f"id{suffixes[1]}"
+                         ]
         for lcol, rcol in zip(left_columns, right_columns):
             concatenated[lcol] = np.where(concatenated.status == "FP", concatenated[rcol], concatenated[lcol])
         concatenated.loc[concatenated.status == "FN", rcat] = "Any"
