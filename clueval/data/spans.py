@@ -63,7 +63,7 @@ class Convert:
                 if "newdoc id" in current_line:
                     doc_id = current_line.split("=")[1].strip()
                 else:
-                    if doc_id_column:
+                    if doc_id_column and current_line.strip() != "":
                         _doc_id = current_line.strip().split("\t")[doc_id_column].strip()
                         # Check if _doc_id != doc_id
                         if _doc_id != "" and _doc_id != doc_id:
