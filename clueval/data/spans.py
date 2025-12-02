@@ -10,7 +10,7 @@ class Convert:
     def __init__(self, path_to_file: os.path.abspath):
         self.path_to_file = path_to_file
 
-    def __call__(self, tag_column: int = 1, tag_name: str = "ner_tags", domain_column: int = None, doc_id_column: int = None, prefix: str = "id"):
+    def __call__(self, tag_column: int = 1, tag_name: str = "ner_tags", doc_token_id_column: int = None, domain_column: int = None, doc_id_column: int = None, prefix: str = "id"):
         span_dictionary = {"start": [],
                            "end": [],
                            "doc_token_id_start": [],
@@ -23,6 +23,7 @@ class Convert:
         # Extract spans from BIO
         domain_dict = {"domain": []}
         for start_id, end_id, doc_token_id_start, doc_token_id_end, tag, domain, doc_id, tokens in self.to_span(tag_column=tag_column,
+                                                                                                                doc_token_id_column=doc_token_id_column,
                                                                                                                 domain_column=domain_column,
                                                                                                                 doc_id_column=doc_id_column):
             span_dictionary["start"].append(start_id)
@@ -38,7 +39,7 @@ class Convert:
         return dataframe
 
 
-    def to_span(self, tag_column=1, domain_column: int = None, doc_id_column: int = None):
+    def to_span(self, tag_column=1, doc_token_id_column: int = None, domain_column: int = None, doc_id_column: int = None):
         """
         Extract predicted spans from BIO file.
         Iterate over each line and check whether predicted tag for current lines header is 'O'. If not do:
@@ -54,22 +55,19 @@ class Convert:
             lines = in_f.readlines() # [line.strip() for line in in_f.readlines() if line.strip()]
             token_id, start_id, doc_token_start_id, doc_token_id = 0, 0, 0, 0 # doc_token_id is the token_id within each document while token_id is the id across the dataset
             tokens, labels = [], []
-            domain, doc_id = None, None
+            domain, doc_id, doc_token_id = None, None, None
 
             for i, line in enumerate(lines):
                 # Extract document id if available
                 current_line = line.strip()
                 if "newdoc id" in current_line:
                     doc_id = current_line.split("=")[1].strip()
-                    # Reset token_id when moving to next document and this option is used
-                    doc_token_id = 0
                 else:
                     if doc_id_column:
                         _doc_id = current_line.strip().split("\t")[doc_id_column].strip()
                         # Check if _doc_id != doc_id
                         if _doc_id != "" and _doc_id != doc_id:
                             doc_id = _doc_id
-                            doc_token_id = 0
                 current_line = current_line.split("\t")
                 # Extract next line if possible
                 try:
@@ -78,7 +76,8 @@ class Convert:
                     next_line = []
                 # Merge single tokens to annotated spans
                 if len(current_line) > 1:
-                    doc_token_id += 1
+                    if doc_token_id_column is not None:
+                        doc_token_id = current_line[doc_token_id_column]
                     token_id += 1
                     current_tag = current_line[tag_column]
                     # Start processing line if current tag is not "O"
