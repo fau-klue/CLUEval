@@ -26,20 +26,27 @@ class Join:
         rest_match_df = self.match_rest(exact_match_df, suffixes=suffixes)
         # Concatenate both dataframes to a single one
         all_df = pd.concat([exact_match_df, rest_match_df])
+
         # Drop redundant columns
-        all_df[[f"start{suffixes[1]}", f"end{suffixes[1]}"]] = all_df[["start", "end"]].where(
-            all_df["status"] == "TP", all_df[[f"start{suffixes[1]}", f"end{suffixes[1]}"]].values
-        )
-        all_df[["domain"]] = all_df[[f"domain{suffixes[1]}"]].where(
-            all_df["status"] == "FP", all_df[["domain"]].values
-        )
-        all_df["doc_id"] = all_df[f"doc_id{suffixes[1]}"].where(all_df["doc_id"].isna(), all_df["doc_id"].values)
+        all_df.loc[all_df["status"] == "FP", [f"start{suffixes[1]}", f"end{suffixes[1]}"]] = all_df.loc[all_df["status"] == "FP", ["start", "end"]]
+        # all_df[[f"start{suffixes[1]}", f"end{suffixes[1]}"]] = all_df[["start", "end"]].where(
+        #    all_df["status"] == "TP", all_df[[f"start{suffixes[1]}", f"end{suffixes[1]}"]].values
+        # )
+
+        all_df.loc[all_df["status"] == "FP", "domain"] = all_df.loc[all_df["status"] == "FP", f"domain{suffixes[1]}"]
+        # all_df[["domain"]] = all_df[[f"domain{suffixes[1]}"]].where(
+        #     all_df["status"] == "FP", all_df[["domain"]].values
+        # )
+
+        all_df.loc[all_df["doc_id"].isna(), "doc_id"] = all_df.loc[all_df["doc_id"].isna(), f"doc_id{suffixes[1]}"]
+        # all_df["doc_id"] = all_df[f"doc_id{suffixes[1]}"].where(all_df["doc_id"].isna(), all_df["doc_id"].values)
         all_df.drop(columns=[f"domain{suffixes[1]}",
                              "id_L",
                              "id_R"], inplace=True)
 
         # Reorder table
-        all_df = all_df.sort_values(by=["start", f"start{suffixes[1]}"]).reset_index(drop=True)
+        all_df = all_df.iloc[all_df[["start", "start{suffixes[1]}"]].min(axis=1).argsort()].reset_index(drop=True)
+        # all_df.sort_values(by=["start", f"start{suffixes[1]}"]).reset_index(drop=True)
         return all_df
 
     def get_exact_match(self, on: str | List[str], how: str = "inner", suffixes: tuple = ("", "_Y")):
@@ -93,8 +100,8 @@ class Join:
         for i in range(left.shape[0]):
             overlap = np.maximum(0, np.minimum(left.end.iloc[i], right.end) - np.maximum(left.start.iloc[i], right.start) + 1)
             # Get id for overlapping if exists
-            if max(overlap) > 0:
-                id_max_overlap = overlap.idxmax()
+            if overlap.max() > 0:
+                id_max_overlap = overlap.argmax()
                 # Assign span id from right to corresponded span from left
                 left.loc[i, "id_R"] = right.id.iloc[id_max_overlap]
                 # Assign span id from left to corresponded span from right
@@ -110,20 +117,13 @@ class Join:
         shorter (sub) or longer (super) than the other one.
         :param rest: Spans dataframe
         """
-        status = ["overlap"] * rest.shape[0]
-        for i in range(rest.shape[0]):
-            if pd.isna(rest.id_L.iloc[i]):
-                status[i] = "FN"
-            elif pd.isna(rest.id.iloc[i]):
-                status[i] = "FP"
-            else:
-                # Subset: start left >= start right and end left <= right
-                if status[i] == "overlap" and rest.start.iloc[i] >= rest.start_Y.iloc[i] and rest.end.iloc[i] <= rest.end_Y.iloc[i]:
-                    status[i] = "sub"
-                # Super: start left <= start right and end left >= right
-                elif status[i] == "overlap" and rest.start.iloc[i] <= rest.start_Y.iloc[i] and rest.end.iloc[i] >= rest.end_Y.iloc[i]:
-                    status[i] = "super"
-        rest = rest.assign(status=status)
+        rest["status"] = "overlap"
+        rest.loc[rest["id_L"].isna(), "status"] = "FN"
+        rest.loc[rest["id"].isna(), "status"] = "FP"
+        # Subset: start left >= start right and end left <= right
+        rest.loc[(rest["status"] == "overlap") & (rest["start"] >= rest[f"start_Y"]) & (rest["end"] <= rest["end_Y"]), "status"] = "sub"
+        # Super: start left <= start right and end left >= right
+        rest.loc[(rest["status"] == "overlap") & (rest["start"] <= rest[f"start_Y"]) & (rest["end"] >= rest["end_Y"]), "status"] = "super"
         return rest
 
 
@@ -183,3 +183,8 @@ class JoinAnnotationLayers(Join):
                                       "status"]
                          )
         return all_df
+
+class JoinPredictionLayers:
+    def __init__(self, x, y):
+        super().__init__(x,y)
+
