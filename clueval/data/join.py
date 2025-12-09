@@ -24,29 +24,17 @@ class Join:
         """
         exact_match_df = self.get_exact_match(on=on, how=how, suffixes=suffixes)
         rest_match_df = self.match_rest(exact_match_df, suffixes=suffixes)
-        # Concatenate both dataframes to a single one
+        # Concatenate both dataframes to a single one and drop redundant columns
         all_df = pd.concat([exact_match_df, rest_match_df])
-
-        # Drop redundant columns
-        all_df.loc[all_df["status"] == "FP", [f"start{suffixes[1]}", f"end{suffixes[1]}"]] = all_df.loc[all_df["status"] == "FP", ["start", "end"]]
-        # all_df[[f"start{suffixes[1]}", f"end{suffixes[1]}"]] = all_df[["start", "end"]].where(
-        #    all_df["status"] == "TP", all_df[[f"start{suffixes[1]}", f"end{suffixes[1]}"]].values
-        # )
-
+        all_df.loc[all_df["status"] == "TP", [f"start{suffixes[1]}", f"end{suffixes[1]}"]] = all_df.loc[all_df["status"] == "TP", ["start", "end"]]
         all_df.loc[all_df["status"] == "FP", "domain"] = all_df.loc[all_df["status"] == "FP", f"domain{suffixes[1]}"]
-        # all_df[["domain"]] = all_df[[f"domain{suffixes[1]}"]].where(
-        #     all_df["status"] == "FP", all_df[["domain"]].values
-        # )
-
         all_df.loc[all_df["doc_id"].isna(), "doc_id"] = all_df.loc[all_df["doc_id"].isna(), f"doc_id{suffixes[1]}"]
-        # all_df["doc_id"] = all_df[f"doc_id{suffixes[1]}"].where(all_df["doc_id"].isna(), all_df["doc_id"].values)
+        # Drop redundant columns
         all_df.drop(columns=[f"domain{suffixes[1]}",
                              "id_L",
                              "id_R"], inplace=True)
-
-        # Reorder table
-        all_df = all_df.iloc[all_df[["start", "start{suffixes[1]}"]].min(axis=1).argsort()].reset_index(drop=True)
-        # all_df.sort_values(by=["start", f"start{suffixes[1]}"]).reset_index(drop=True)
+        # Sort concatenated table
+        all_df = all_df.iloc[all_df[["start", f"start{suffixes[1]}"]].min(axis=1).argsort()].reset_index(drop=True)
         return all_df
 
     def get_exact_match(self, on: str | List[str], how: str = "inner", suffixes: tuple = ("", "_Y")):
@@ -134,13 +122,42 @@ class JoinAnnotationLayers(Join):
     def __call__(self, lcat: str, rcat: str, on: str| List[str], how="inner", suffixes: tuple=("", "_Y")):
         exact = self.get_exact_match(on=on, how=how, suffixes=suffixes)
         rest = self.match_rest(exact)
-        # Get partial matches for anon_cat
-        rest[["start", "end", "doc_token_id_start", "doc_token_id_end", "text"]] = rest[
-            [f"start{suffixes[1]}", f"end{suffixes[1]}",
-             f"doc_token_id_start{suffixes[1]}", f"doc_token_id_end{suffixes[1]}",
-             f"text{suffixes[1]}"]].where(
-            rest.status == "sub", rest[["start", "end", "doc_token_id_start", "doc_token_id_end", "text"]].values
-        )
+        # Handle sub cases
+        rest.loc[rest["status"] == "sub", ["start",
+                                           "end",
+                                           "doc_token_id_start",
+                                           "doc_token_id_end",
+                                           "text"]
+        ] = rest.loc[rest["status"] == "sub", [f"start{suffixes[1]}",
+                                               f"end{suffixes[1]}",
+                                               f"doc_token_id_start{suffixes[1]}",
+                                               f"doc_token_id_end{suffixes[1]}",
+                                               f"text{suffixes[1]}"
+                                               ]
+        ].values
+        # Handle overlapping cases for predicted spans: we want to extend those spans by joining predicted tokens
+        mask_overlap = rest["status"] == "overlap"
+        rest.loc[mask_overlap, "start"] = rest.loc[mask_overlap, ["start", f"start{suffixes[1]}"]].min(axis=1)
+        rest.loc[mask_overlap, "end"] = rest.loc[mask_overlap, ["end", f"end{suffixes[1]}"]].max(axis=1)
+        # We also need to adjust doc_token_ids for further analysis
+        rest.loc[mask_overlap, "doc_token_id_start"] = rest.loc[mask_overlap, ["doc_token_id_start", f"doc_token_id_start{suffixes[1]}"]].min(axis=1)
+        rest.loc[mask_overlap, "doc_token_id_end"] = rest.loc[mask_overlap, ["doc_token_id_end", f"doc_token_id_end{suffixes[1]}"]].max(axis=1)
+        # Unified span: Do not keep both spans like in the previous version from the R code: paste(text, "+", text.R).
+        # Try to concatenate partially matched spans that are neither 'sub' or 'super'. Partially matching cases:
+        # Case 1: text from x starts earlier
+        rest.loc[mask_overlap & (rest["start"] < rest[f"start{suffixes[1]}"]), "text"] = [self._concatenate_overlapping(text, text_Y)
+                                                                                          for text, text_Y in zip(rest.loc[mask_overlap & (rest["start"] < rest[f"start{suffixes[1]}"]), "text"],
+                                                                  rest.loc[mask_overlap & (rest["start"] < rest[f"start{suffixes[1]}"]), f"text{suffixes[1]}"]
+                                                                  )
+                                                                                          ]
+        # Case 2: text from y starts earlier
+        rest.loc[mask_overlap & (rest["start"] == rest[f"start{suffixes[1]}"]), "text"] = [
+            self._concatenate_overlapping(text, text_Y)
+            for text, text_Y in zip(rest.loc[mask_overlap & (rest["start"] == rest[f"start{suffixes[1]}"]), "text"],
+                                    rest.loc[mask_overlap & (rest["start"] == rest[f"start{suffixes[1]}"]), f"text{suffixes[1]}"]
+                                    )
+            ]
+
         # Drop NaN by start and end ids
         # rest = rest.dropna(subset=["start", "end"])
         # Fill category columns with information if NaN
@@ -163,12 +180,32 @@ class JoinAnnotationLayers(Join):
             concatenated[lcol] = np.where(concatenated.status == "FP", concatenated[rcol], concatenated[lcol])
         concatenated.loc[concatenated.status == "FN", rcat] = "Any"
 
+        # Sort by asc start and desc end
         all_df = (concatenated.sort_values(by=["start", "end"], ascending=[True, False])).reset_index(drop=True)
-        all_df = all_df.loc[~all_df.duplicated(subset="start")].loc[~all_df.duplicated(subset="end")]
+        # Drop duplicated start and end
+        all_df = all_df.loc[~all_df.duplicated(subset="start")]
+        all_df = all_df.loc[~all_df.duplicated(subset="end")]
+        # Remove nested spans: If end.shift(1) >= start and wrong FPs (tokens inside longer spans that were not considered as 'sub' error).
+        # Use while loop to ensure, that all incorrect FPs will be removed (tokens inside an overlap)
+        list_of_nested_id = []
+        while True:
+            inside = all_df["end"].shift(1) >= all_df["start"]
+            if not inside.any():
+                break
+            list_of_nested_id.extend(all_df[inside].index.tolist())
+            all_df = all_df[~inside]# .reset_index(drop=True)
+        # all_df = all_df.loc[~(all_df["end"].shift(1) >= all_df["start"])] # R code: All[!(shift(end) >= start)])
 
-        all_df.reset_index(drop=True, inplace=True)
-        all_df.loc[all_df.status == "FN", rcat] = "Any"
+        all_df = all_df.sort_values(by=["start", "end"], ascending=[True, False]).reset_index(drop=True)
+
+        # Replicate assertion from R code: stopifnot(all(shift(All$end) < All$start, na.rm=TRUE))
+        assertion_cond = (all_df["end"].shift(1) < all_df["start"])
+        assertion_cond[0] = True # NaN compare to everything is always False so assertion all() will be False
+        assert all(assertion_cond)
+        # print(all_df.loc[all_df["end"].shift(1) > all_df["start"]])
+
         all_df["doc_id"] = all_df[f"doc_id{suffixes[1]}"].where(all_df["doc_id"].isna(), all_df["doc_id"].values)
+
         all_df = all_df.drop(columns=["status",
                                       f"start{suffixes[1]}",
                                       f"end{suffixes[1]}",
@@ -179,12 +216,18 @@ class JoinAnnotationLayers(Join):
                                       f"domain{suffixes[1]}",
                                       f"doc_id{suffixes[1]}",
                                       "id_L",
-                                      "id_R",
-                                      "status"]
+                                      "id_R",]
                          )
         return all_df
 
-class JoinPredictionLayers:
-    def __init__(self, x, y):
-        super().__init__(x,y)
+    @staticmethod
+    def _concatenate_overlapping(text_x, text_y):
+        n_overlap = 0
+        split_text_x = text_x.split()
+        split_text_y = text_y.split()
+        for i in range(1, min(len(split_text_x), len(split_text_y)) + 1):
+            if split_text_x[-i:] == split_text_y[:i]:
+                n_overlap = i
+        return " ".join(split_text_x + split_text_y[n_overlap:])
+
 
