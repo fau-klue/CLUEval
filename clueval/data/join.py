@@ -152,9 +152,9 @@ class JoinAnnotationLayers(Join):
                                                                                           ]
         # Case 2: text from y starts earlier
         rest.loc[mask_overlap & (rest["start"] == rest[f"start{suffixes[1]}"]), "text"] = [
-            self._concatenate_overlapping(text, text_Y)
-            for text, text_Y in zip(rest.loc[mask_overlap & (rest["start"] == rest[f"start{suffixes[1]}"]), "text"],
-                                    rest.loc[mask_overlap & (rest["start"] == rest[f"start{suffixes[1]}"]), f"text{suffixes[1]}"]
+            self._concatenate_overlapping(text_Y, text)
+            for text, text_Y in zip(rest.loc[mask_overlap & (rest["start"] == rest[f"start{suffixes[1]}"]), f"text{suffixes[1]}"],
+                                    rest.loc[mask_overlap & (rest["start"] == rest[f"start{suffixes[1]}"]), f"text"]
                                     )
             ]
 
