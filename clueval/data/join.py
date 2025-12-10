@@ -24,6 +24,31 @@ class Join:
         """
         exact_match_df = self.get_exact_match(on=on, how=how, suffixes=suffixes)
         rest_match_df = self.match_rest(exact_match_df, suffixes=suffixes)
+        # Post-processing of rest_match_df. # Handle incorrect FPs after joining candidate with reference.
+        filtered_rest_df = rest_match_df.loc[~(rest_match_df["id_L"].isna()) & (rest_match_df["id_L"].str.contains("gold"))]
+        filtered_rest_df = filtered_rest_df[~(filtered_rest_df["status"].isin(["sub"]))]
+        id_count = filtered_rest_df["id_L"].value_counts()
+        filtered_rest_df = filtered_rest_df.loc[filtered_rest_df["id_L"].map(id_count) > 1].sort_values(by=["id_L", "start_Y"])
+
+        # TODO: Make a method from the following code block...
+        columns_to_concat = ["doc_token_id_start_Y", "doc_token_id_end_Y", "text_Y", "id_Y"]
+        agg_func = {}
+        for col in filtered_rest_df.columns:
+            if col == "id_L":
+                continue
+            elif col == f"start{suffixes[1]}":
+                agg_func[col] = "min"
+            elif col == f"end{suffixes[1]}":
+                agg_func[col] = "max"
+            elif col in columns_to_concat:
+                agg_func[col] = lambda x: " ".join(x.dropna().astype(str))
+            else:
+                agg_func[col] = "last"
+        # Aggregate FPs + overlap and FP + super to a unified span and insert them to rest_match_df (no incorrect FP cases should exist after this).
+        agg_rest_df = filtered_rest_df.groupby("id_L", as_index=False).agg(agg_func)
+        rest_match_df = rest_match_df[~(rest_match_df["id_L"].isin(agg_rest_df["id_L"]) & ~(rest_match_df["status"] == "sub"))] # Remove previous entries for those FPs cases
+        rest_match_df = pd.concat([rest_match_df, agg_rest_df]).sort_values(by=["start", "end"])
+
         # Concatenate both dataframes to a single one and drop redundant columns
         all_df = pd.concat([exact_match_df, rest_match_df])
         all_df.loc[all_df["status"] == "TP", [f"start{suffixes[1]}", f"end{suffixes[1]}"]] = all_df.loc[all_df["status"] == "TP", ["start", "end"]]
@@ -91,9 +116,17 @@ class Join:
             if overlap.max() > 0:
                 id_max_overlap = overlap.argmax()
                 # Assign span id from right to corresponded span from left
-                left.loc[i, "id_R"] = right.id.iloc[id_max_overlap]
+                # left.loc[i, "id_R"] = right.id.iloc[id_max_overlap]
                 # Assign span id from left to corresponded span from right
-                right.loc[id_max_overlap, "id_L"] = left.id.iloc[i]
+                # right.loc[id_max_overlap, "id_L"] = left.id.iloc[i]
+                # Alternative solution: assign all predicted spans to gold. We might need a post processing step to join these overlapping cases
+                for j, o in enumerate(overlap):
+                    if o != 0:
+                        # Assign span id from right to corresponded span from left
+                        left.loc[i, "id_R"] = right.id.iloc[j]
+                        # Assign span id from left to corresponded span from right
+                        if right.loc[j, "id_L"] == "":
+                            right.loc[j, "id_L"] = left.id.iloc[i]
         return left, right
 
     @staticmethod
