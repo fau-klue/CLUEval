@@ -33,6 +33,7 @@ class Join:
             filtered_rest_df = filtered_rest_df.loc[filtered_rest_df["id_L"].map(id_count) > 1].sort_values(by=["id_L", "start_Y"])
 
             # TODO: Make a method from the following code block...
+            # TODO:
             columns_to_concat = ["doc_token_id_start_Y", "doc_token_id_end_Y", "text_Y", "id_Y"]
             agg_func = {}
             for col in filtered_rest_df.columns:
@@ -52,9 +53,12 @@ class Join:
             rest_match_df = pd.concat([rest_match_df, agg_rest_df]).sort_values(by=["start", "end"])
         # Concatenate both dataframes to a single one and drop redundant columns
         all_df = pd.concat([exact_match_df, rest_match_df])
-        all_df.loc[all_df["status"] == "TP", [f"start{suffixes[1]}", f"end{suffixes[1]}"]] = all_df.loc[all_df["status"] == "TP", ["start", "end"]]
+        # Extend TPs: A predicted span should be counted as TP if it equals a gold annotation after the merging step
+        all_df.loc[(all_df["text"] == all_df["text_Y"]) & (all_df["status"] != "TP"), "status"] = "TP"
+        all_df.loc[all_df["status"] == "TP", [f"start{suffixes[1]}", f"end{suffixes[1]}"]] = all_df.loc[all_df["status"] == "TP", ["start", "end"]].values
         all_df.loc[all_df["status"] == "FP", "domain"] = all_df.loc[all_df["status"] == "FP", f"domain{suffixes[1]}"]
         all_df.loc[all_df["doc_id"].isna(), "doc_id"] = all_df.loc[all_df["doc_id"].isna(), f"doc_id{suffixes[1]}"]
+
         # Drop redundant columns
         all_df.drop(columns=[f"domain{suffixes[1]}",
                              "id_L",
