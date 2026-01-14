@@ -153,110 +153,7 @@ class Join:
         return rest
 
 
-class JoinAnnotationLayers(Join):
-    def __int__(self, x: pd.DataFrame, y: pd.DataFrame):
-        super().__init__(x, y)
-
-    def __call__(self, lcat: str, rcat: str, on: str| List[str], how="inner", suffixes: tuple=("", "_Y")):
-        exact = self.get_exact_match(on=on, how=how, suffixes=suffixes)
-        rest = self.match_rest(exact)
-        # Handle sub cases
-        rest.loc[rest["status"] == "sub", ["start",
-                                           "end",
-                                           "doc_token_id_start",
-                                           "doc_token_id_end",
-                                           "text"]
-        ] = rest.loc[rest["status"] == "sub", [f"start{suffixes[1]}",
-                                               f"end{suffixes[1]}",
-                                               f"doc_token_id_start{suffixes[1]}",
-                                               f"doc_token_id_end{suffixes[1]}",
-                                               f"text{suffixes[1]}"
-                                               ]
-        ].values
-        # Handle overlapping cases for predicted spans: we want to extend those spans by joining predicted tokens
-        mask_overlap = rest["status"] == "overlap"
-        rest.loc[mask_overlap, "start"] = rest.loc[mask_overlap, ["start", f"start{suffixes[1]}"]].min(axis=1)
-        rest.loc[mask_overlap, "end"] = rest.loc[mask_overlap, ["end", f"end{suffixes[1]}"]].max(axis=1)
-        # We also need to adjust doc_token_ids for further analysis
-        rest.loc[mask_overlap, "doc_token_id_start"] = rest.loc[mask_overlap, ["doc_token_id_start", f"doc_token_id_start{suffixes[1]}"]].min(axis=1)
-        rest.loc[mask_overlap, "doc_token_id_end"] = rest.loc[mask_overlap, ["doc_token_id_end", f"doc_token_id_end{suffixes[1]}"]].max(axis=1)
-        # Unified span: Do not keep both spans like in the previous version from the R code: paste(text, "+", text.R).
-        # Try to concatenate partially matched spans that are neither 'sub' or 'super'. Partially matching cases:
-        # Case 1: text from x starts earlier
-        rest.loc[mask_overlap & (rest["start"] < rest[f"start{suffixes[1]}"]), "text"] = [self._concatenate_overlapping(text, text_Y)
-                                                                                          for text, text_Y in zip(rest.loc[mask_overlap & (rest["start"] < rest[f"start{suffixes[1]}"]), "text"],
-                                                                  rest.loc[mask_overlap & (rest["start"] < rest[f"start{suffixes[1]}"]), f"text{suffixes[1]}"]
-                                                                  )
-                                                                                          ]
-        # Case 2: text from y starts earlier
-        rest.loc[mask_overlap & (rest["start"] == rest[f"start{suffixes[1]}"]), "text"] = [
-            self._concatenate_overlapping(text_Y, text)
-            for text, text_Y in zip(rest.loc[mask_overlap & (rest["start"] == rest[f"start{suffixes[1]}"]), f"text{suffixes[1]}"],
-                                    rest.loc[mask_overlap & (rest["start"] == rest[f"start{suffixes[1]}"]), f"text"]
-                                    )
-            ]
-
-        # Drop NaN by start and end ids
-        # rest = rest.dropna(subset=["start", "end"])
-        # Fill category columns with information if NaN
-        # rest[lcat] = rest[lcat].fillna(lcat)
-
-        # Concatenate both dataframes to a single one if rest is not empty (joining gold annotation layers)
-        concatenated = pd.concat([exact, rest])
-        # Convert dtypes for start and end to floating points
-        concatenated[["start", "end"]] = concatenated[["start", "end"]].astype(float)
-
-        # Fill in some information for spans found by only one of the classification header.
-        # If status is FP (exists only in the right table), copy values from right column to corresponding left column
-        # only if left value is NaN and right value doesn't exist in the left column
-        left_columns = ["start", "end", "doc_token_id_start", "doc_token_id_end", "text", "id", lcat]
-        right_columns = [f"start{suffixes[1]}", f"end{suffixes[1]}",
-                         f"doc_token_id_start{suffixes[1]}", f"doc_token_id_end{suffixes[1]}",
-                         f"text{suffixes[1]}", f"id{suffixes[1]}"
-                         ]
-        for lcol, rcol in zip(left_columns, right_columns):
-            concatenated[lcol] = np.where(concatenated.status == "FP", concatenated[rcol], concatenated[lcol])
-        concatenated.loc[concatenated.status == "FN", rcat] = "Any"
-
-        # Sort by asc start and desc end
-        all_df = (concatenated.sort_values(by=["start", "end"], ascending=[True, False])).reset_index(drop=True)
-        # Drop duplicated start and end
-        all_df = all_df.loc[~all_df.duplicated(subset="start")]
-        all_df = all_df.loc[~all_df.duplicated(subset="end")]
-        # Remove nested spans: If end.shift(1) >= start and wrong FPs (tokens inside longer spans that were not considered as 'sub' error).
-        # Use while loop to ensure, that all incorrect FPs will be removed (tokens inside an overlap)
-        list_of_nested_id = []
-        while True:
-            inside = all_df["end"].shift(1) >= all_df["start"]
-            if not inside.any():
-                break
-            list_of_nested_id.extend(all_df[inside].index.tolist())
-            all_df = all_df[~inside]# .reset_index(drop=True)
-        # all_df = all_df.loc[~(all_df["end"].shift(1) >= all_df["start"])] # R code: All[!(shift(end) >= start)])
-
-        all_df = all_df.sort_values(by=["start", "end"], ascending=[True, False]).reset_index(drop=True)
-
-        # Replicate assertion from R code: stopifnot(all(shift(All$end) < All$start, na.rm=TRUE))
-        assertion_cond = (all_df["end"].shift(1) < all_df["start"])
-        assertion_cond[0] = True # NaN compare to everything is always False so assertion all() will be False
-        assert all(assertion_cond)
-        # print(all_df.loc[all_df["end"].shift(1) > all_df["start"]])
-
-        all_df["doc_id"] = all_df[f"doc_id{suffixes[1]}"].where(all_df["doc_id"].isna(), all_df["doc_id"].values)
-
-        all_df = all_df.drop(columns=["status",
-                                      f"start{suffixes[1]}",
-                                      f"end{suffixes[1]}",
-                                      f"doc_token_id_start{suffixes[1]}",
-                                      f"doc_token_id_end{suffixes[1]}",
-                                      f"id{suffixes[1]}",
-                                      f"text{suffixes[1]}",
-                                      f"domain{suffixes[1]}",
-                                      f"doc_id{suffixes[1]}",
-                                      "id_L",
-                                      "id_R",]
-                         )
-        return all_df
+"""
 
     @staticmethod
     def _concatenate_overlapping(text_x, text_y):
@@ -267,5 +164,4 @@ class JoinAnnotationLayers(Join):
             if split_text_x[-i:] == split_text_y[:i]:
                 n_overlap = i
         return " ".join(split_text_x + split_text_y[n_overlap:])
-
-
+"""
