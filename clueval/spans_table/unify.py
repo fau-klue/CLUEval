@@ -21,7 +21,7 @@ class MultiHeadSpanTokenUnifier:
                 domain = token.domain
                 if token.position == span.start_id:
                     doc_token_id_start = token.token_id
-                elif token.position == span.end_id:
+                if token.position == span.end_id:
                     doc_token_id_end = token.token_id
 
                 labels.append(token.label)
