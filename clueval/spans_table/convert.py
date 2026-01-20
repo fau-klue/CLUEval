@@ -7,24 +7,27 @@ import pandas as pd
 
 
 class Convert:
-    def __init__(self, path_to_file:str, annotation_layer:str|list[str] | None=None, domain_column:int | None=None, doc_id_column:int | None=None):
+    def __init__(self, path_to_file:str, annotation_layer:str|list[str] | None=None, token_id_column: int=None, domain_column:int | None=None, doc_id_column:int | None=None):
         self.path_to_file = path_to_file
         self.annotation_layer = annotation_layer
+        self.token_id_column = token_id_column
         self.domain_column = domain_column
         self.doc_id_column = doc_id_column
 
-    def __call__(self, head: int = None):
-        if not head:
-            spans_df = self.build_unified_dataframe()
-            spans_df = spans_df.join(spans_df["label"].apply(pd.Series).add_prefix("head_"))
-        else:
-            spans_df = self.build_head_wise_dataframe(head=head)
-            spans_df = spans_df.join(spans_df["label"].apply(pd.Series).add_prefix("head_"))
-        return spans_df.sort_values(by=["start_id", "end_id"])
+
+    def __call__(self, id_prefix="id"):
+        spans_df = self.build_unified_dataframe()
+        spans_df = spans_df.join(spans_df["label"].apply(pd.Series).add_prefix("head_")).drop(columns="label").rename(columns={"start_id": "start",
+                                                                                                                               "end_id": "end"
+                                                                                                                               }
+                                                                                                                      )
+        spans_df = spans_df.sort_values(by=["start", "end"])
+        spans_df = self._assign_span_ids(spans_df, prefix=id_prefix)
+        return spans_df
 
     def build_unified_dataframe(self):
         doc_to_spans_mapping, doc_to_tokens_mapping, list_of_doc_ids = self.parse()
-        unified_candidate_spans = []
+        all_unified_spans = []
         for doc_id in list_of_doc_ids:
             spans_by_doc_id = doc_to_spans_mapping[doc_id]
             tokens_by_doc_id = doc_to_tokens_mapping[doc_id]
@@ -35,8 +38,8 @@ class Convert:
 
             span_token_unifier = MultiHeadSpanTokenUnifier(intermediate_overlap_components, tokens_by_doc_id)
             unified_spans = [span for span in span_token_unifier()]
-            unified_candidate_spans.extend(unified_spans)
-        return pd.DataFrame(unified_candidate_spans)
+            all_unified_spans.extend(unified_spans)
+        return pd.DataFrame(all_unified_spans)
 
     def build_head_wise_dataframe(self, head: int=1):
         self.parse()
@@ -58,6 +61,7 @@ class Convert:
         parser = BioToSpanParser(self.path_to_file)
         list_of_spans, list_of_tokens = parser(tag_column=1,
                                                n_tag_columns=n_tag_columns,
+                                               doc_token_id_column=self.token_id_column,
                                                domain_column=self.domain_column,
                                                doc_id_column=self.doc_id_column,
                                                extract_tokens=True
@@ -66,6 +70,7 @@ class Convert:
         if isinstance(self.annotation_layer, list):
             for i in range(1, len(self.annotation_layer)):
                 spans_per_layer, _ = parser(tag_column=i+1,
+                                            doc_token_id_column=self.token_id_column,
                                             domain_column=self.domain_column,
                                             doc_id_column=self.doc_id_column,
                                             extract_tokens=False
@@ -89,3 +94,13 @@ class Convert:
         for data_object in list_of_object:
             mapping[data_object.doc_id].append(data_object)
         return mapping
+
+    @staticmethod
+    def _assign_span_ids(inp_data: pd.DataFrame, prefix: str = "id"):
+        """
+        Assign IDs to annotated spans using the given prefix.
+        :param inp_data: Pandas dataframe with extracted spans
+        :param prefix: IDs prefix
+        """
+        inp_data["id"] = [f"{prefix}{i + 1:06d}" for i in range(inp_data.shape[0])]
+        return inp_data
