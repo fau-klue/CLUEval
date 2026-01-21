@@ -1,4 +1,6 @@
-import numpy as np
+import warnings
+warnings.simplefilter(action="ignore", category=FutureWarning) # Suppress pandas FutureWarnings for the groupby() function for now
+
 import pandas as pd
 
 class Match:
@@ -13,13 +15,15 @@ class Match:
         match_df.drop(columns=[f"start{suffixes[1]}",
                             f"end{suffixes[1]}",
                             "id",
-                            "id_x",
                             "id_y",
                             f"id{suffixes[1]}",
                             f"domain{suffixes[1]}",
                             f"doc_id{suffixes[1]}",
                             f"status{suffixes[1]}"
                              ], inplace=True)
+        # Fill Nan values in label columns with "FN"
+        for column in [col for col in match_df.columns if col.startswith("head_")]:
+            match_df.fillna({column: "FN"}, inplace=True)
         return match_df
 
     @staticmethod
@@ -54,11 +58,12 @@ class Match:
         # Case 4: overlap - remaining spans in x are contained in adjacent overlapping spans in y
         x_rest, y_rest = self.match_overlap_containment(x_rest, y_rest)
 
-        # Case 5: All remaining rows in x will be assigned to FN
-        x_rest.loc[x_rest["status"] == "rest", "status"] = "FN"
+        # Case 5: All remaining rows in x are considered as "mismatching" between x_rest and y_rest
+        x_rest.loc[x_rest["status"] == "rest", "status"] = "mismatch"
 
         # Merge x_rest with y_rest by x_rest.id_y and y_rest.id to receive spans information from y
-        x_rest = x_rest.merge(y_rest, how="left", left_on="id_y", right_on="id", suffixes=suffixes)
+        x_rest = self.merge_y_to_x(x_rest, y_rest, suffixes=suffixes)
+        # x_rest = x_rest.merge(y_rest, how="left", left_on="id_y", right_on="id", suffixes=suffixes)
         return x_rest
 
     @staticmethod
@@ -97,8 +102,8 @@ class Match:
         for i, row in x_overlap.iterrows():
             superset_y = y_overlap[(y_overlap["start"] <= row["start"]) & (y_overlap["end"] >= row["end"])]
             if superset_y.empty:
-                x.at[i, "status"] = "FN"
-                y.loc[y["id_x"].str.contains(x.iloc[i]["id"]), "status"] = "FN"
+                x.at[i, "status"] = "mismatch"
+                y.loc[y["id_x"].str.contains(x.iloc[i]["id"]), "status"] = "mismatch"
         return x, y
 
     def overlap(self, x: pd.DataFrame, y: pd.DataFrame):
@@ -116,8 +121,6 @@ class Match:
         y.fillna(value={"number_overlapping_tokens_with_x": 0}, inplace=True)
         x, y = self.adjacent_spans(x, y)
         y = y[[column for column in y.columns if column not in ["status", "id_x"]] + ["status", "id_x"]] # Rearrange columns
-        # Assign "FN" to spans in x that overlap with non-adjacent spans from y
-        # x.loc[x["id"].isin(y.loc[y["status"] == "FN", "id_x"]), "status"] = "FN"
         return x, y
 
     def adjacent_spans(self, x, overlap_df):
@@ -135,9 +138,9 @@ class Match:
         number_of_spans_per_group = adjacency_df.groupby("adjacency")["adjacent"].count()
         # Map count values to adjacency dataframe
         adjacency_df["adjacency_count"] = adjacency_df["adjacency"].map(number_of_spans_per_group)
-        # Assign 5. case (FNs) to rows that are marked as overlap but not part of adjacent spans in adjacency_df and in x
-        adjacency_df.loc[(adjacency_df["status"] == "overlap") & (adjacency_df["adjacency_count"] == 1), "status"] = "FN"
-        x.loc[x["id"].isin(adjacency_df.loc[adjacency_df["status"] == "FN", "id_x"]), "status"] = "FN"
+        # Assign case 5 "mismatch" to rows that are marked as overlap but not part of adjacent spans in adjacency_df and in x
+        adjacency_df.loc[(adjacency_df["status"] == "overlap") & (adjacency_df["adjacency_count"] == 1), "status"] = "mismatch"
+        x.loc[x["id"].isin(adjacency_df.loc[adjacency_df["status"] == "mismatch", "id_x"]), "status"] = "mismatch"
 
         # Group adjacency_df to unify overlapping spans
         headers_column = [column for column in adjacency_df.columns if column.startswith("head_")]
@@ -154,11 +157,24 @@ class Match:
                           "doc_token_id_end": grouped_df["doc_token_id_end"].iloc[-1],
                           "doc_id": grouped_df["doc_id"].iloc[0],
                           "domain": grouped_df["domain"].iloc[0],
-                          "text": " ".join(grouped_df["text"]),
-                          "id": grouped_df["id"].iloc[0],
+                          "text": " | ".join(grouped_df["text"]),
+                          "id": " | ".join(grouped_df["id"]),
                           "status": grouped_df["status"].iloc[0],
                           "id_x": " | ".join(grouped_df["id_x"])
                           }
         for column in headers_column:
             combined_spans[column] = longest_overlap[column]
         return pd.Series(combined_spans)
+
+    @staticmethod
+    def merge_y_to_x(x:pd.DataFrame, y: pd.DataFrame, suffixes=("", "_Y")):
+        y_transformed = y.assign(id=y.id.str.split(" | ")
+                                 ).explode("id")[["id",
+                                                  "start",
+                                                  "end",
+                                                  "doc_token_id_start",
+                                                  "doc_token_id_end",
+                                                  "text",
+                                                  "status"] + [col for col in y if col.startswith( "head_")]]
+        y_transformed = y_transformed[y_transformed["id"] != "|"]
+        return x.merge(y_transformed, left_on="id_y", right_on="id", how="left", suffixes=suffixes)
