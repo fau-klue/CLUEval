@@ -18,3 +18,4 @@ build/
 venv/
 debug.py
 .idea
+debug/*.tsv
