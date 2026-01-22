@@ -127,6 +127,12 @@ class MetricsForCategoricalSpansAnonymisation(Metrics):
             - compute TP for precision (tp_precision + sub_ids + exact matches)
             - compute TP for recall (tp_recall + sub_ids + exact matches)
             - compute precision, recall and f1
+        :param lenient_level: Decide whether to include lenient spans or not.
+                Default: 0: only exact matches.
+                Options:
+                - 1: ["exact", "subset"],
+                - 2: ["exact", "subset", "tiling"],
+                - 3: ["exact", "subset", "tiling", "overlap"]
         """
         # Conditions for TP:
         # 1. Exact match and additional lenient levels
