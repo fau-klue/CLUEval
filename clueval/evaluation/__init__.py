@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 
 import pandas as pd
-from ..spans_table import BioToSpanParser, Join#, JoinAnnotationLayers
+from ..spans_table import Convert, Join 
 from .metrics import MetricsForCategoricalSpansAnonymisation, MetricsForSpansAnonymisation
 
 def evaluate(path_reference:str,
