@@ -15,6 +15,7 @@ build/
 *.egg-info/
 
 *~
+.venv/
 venv/
 debug.py
 .idea
