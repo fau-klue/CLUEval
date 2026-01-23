@@ -9,7 +9,7 @@ class Metrics(ABC):
     """ Abstract class with methods for computing classification metrics."""
 
     @abstractmethod
-    def compute_metrics(self, lenient_level: int = 0, row_name: str = None, **kwargs):
+    def compute_metrics(self, lenient_level: int = 0, **kwargs):
         pass
 
     @staticmethod
@@ -52,10 +52,10 @@ class MetricsForSpansAnonymisation(Metrics):
         self.compute_metrics(**kwargs)
         return pd.DataFrame(self.metrics, index=[self.metrics["row_name"]])
 
-    def compute_metrics(self, lenient_level: int = 0, row_name: str = None, **kwargs):
+    def compute_metrics(self, lenient_level: int = 0, row_name: str = None):
         """
-        Compute evaluation metrics and return a dataframe containing following information:
-        Precision, Recall, F1, False Neg., False Pos., Support and Row Name
+        Compute evaluation metrics:
+        Precision, Recall, F1, TP_Precision, TP_Recall, FN, FP, Support and Row Name
         :param lenient_level: Decide whether to include lenient spans or not.
                 Default: 0: only exact matches.
                 Options:
@@ -70,7 +70,7 @@ class MetricsForSpansAnonymisation(Metrics):
             # True positive cases for Recall: exact matches and accepted lenient spans
             tp_recall = self.recall_table[self.recall_table["status"].isin(self.lenient_levels[lenient_level])].shape[0]
 
-            # Compute metrics
+            # Update metrics
             self.metrics["P"] = self.precision(tp_precision, self.precision_table.shape[0])
             self.metrics["R"] = self.recall(tp_recall, self.recall_table.shape[0])
             self.metrics["F1"] = self.f1(self.metrics["P"], self.metrics["R"])
@@ -115,18 +115,16 @@ class MetricsForCategoricalSpansAnonymisation(Metrics):
     def __call__(self, **kwargs):
         categorical_metrics = []
         for cat in self.categories:
-            self.compute_metrics(category=cat, **kwargs)
+            self.compute_metrics(input_category=cat, **kwargs)
             categorical_metrics.append(pd.DataFrame(self.metrics, index=[cat]).drop(columns=["row_name"]))
         return pd.concat(categorical_metrics)
 
-    def compute_metrics(self, lenient_level: int = 0, row_name: str = None, category:str=None):
+    def compute_metrics(self, lenient_level: int = 0, input_category:str=None):
         """
         Method to compute classification metrics for given category.
-        Get number of annotations and predictions for category. Check whether it is not 0. If not do:
-            - determine whether given category is included in annotations or in predictions as sub_ids
-            - compute TP for precision (tp_precision + sub_ids + exact matches)
-            - compute TP for recall (tp_recall + sub_ids + exact matches)
-            - compute precision, recall and f1
+        Compute evaluation metrics:
+        Precision, Recall, F1, TP_Precision, TP_Recall, FN, FP, Support and Row Name
+        :param input_category: Input category
         :param lenient_level: Decide whether to include lenient spans or not.
                 Default: 0: only exact matches.
                 Options:
@@ -139,21 +137,21 @@ class MetricsForCategoricalSpansAnonymisation(Metrics):
         # 2. x_head equals input category
         # 3. x_head == x_head_Y, where x_head is the reference column and x_head_Y is the candidate column
         tp_precision = self.precision_table[(self.precision_table["status"].isin(self.lenient_levels[lenient_level]))
-                                            & (self.precision_table[self.classification_head] == category)
+                                            & (self.precision_table[self.classification_head] == input_category)
                                             & (self.precision_table[self.classification_head] == self.precision_table[self.classification_head + self.suffix]
                                                )
                                             ].shape[0]
         tp_recall = self.recall_table[(self.recall_table["status"].isin(self.lenient_levels[lenient_level]))
-                                            & (self.recall_table[self.classification_head] == category)
+                                            & (self.recall_table[self.classification_head] == input_category)
                                             & (self.recall_table[self.classification_head] == self.recall_table[self.classification_head + self.suffix]
                                                )
                                             ].shape[0]
 
-        n_category_precision = sum(self.precision_cls_head == category)
-        n_category_recall = sum(self.recall_cls_head == category)
-        # Number of exact matches
+        # Total amount of input category as denominator
+        n_category_precision = sum(self.precision_cls_head == input_category)
+        n_category_recall = sum(self.recall_cls_head == input_category)
 
-
+        # Update metrics
         if n_category_precision != 0 and n_category_recall != 0:
             self.metrics["P"] = self.precision(tp_precision, n_category_precision)
             self.metrics["R"] = self.recall(tp_recall, n_category_recall)
