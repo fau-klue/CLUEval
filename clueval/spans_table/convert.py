@@ -16,7 +16,8 @@ class Convert:
 
 
     def __call__(self, id_prefix="id"):
-        spans_df = self.build_unified_dataframe()
+        # spans_df = self.build_unified_dataframe()
+        spans_df = self.build_head_wise_dataframe()
         spans_df = spans_df.join(spans_df["label"].apply(pd.Series).add_prefix("head_")).drop(columns="label").rename(columns={"start_id": "start",
                                                                                                                                "end_id": "end"
                                                                                                                                }
@@ -42,11 +43,55 @@ class Convert:
         return pd.DataFrame(all_unified_spans)
 
     def build_head_wise_dataframe(self, head: int=1):
-        self.parse()
+        doc_to_spans_mapping, doc_to_tokens_mapping, list_of_doc_ids =  self.parse()
         head_spans = []
         head = head
-        #TODO: NU -- implement option to build dataframe from one particular head
-        return pd.DataFrame(head_spans)
+        # TODO: NU -- implement option to build dataframe from one particular head
+        for doc_id in list_of_doc_ids:
+            spans_by_doc_id = doc_to_spans_mapping[doc_id]
+            tokens_by_doc_id = doc_to_tokens_mapping[doc_id]
+            filtered_spans = [span for span in spans_by_doc_id if span.head == head]
+            for span in filtered_spans:
+                # token = tokens_by_doc_id[0]
+                # print(f"Span Start: {span.start_id}, Span end: {span.end_id}")
+                # print(token, "---", type(type(token)))
+                span_tokens = [token for token in tokens_by_doc_id
+                               if span.start_id <= token.position <= span.end_id]
+                span_tokens.sort(key=lambda  t: t.position)
+                if span_tokens:
+                    text = " ".join([token.token for token in span_tokens])
+                    doc_token_id_start = span_tokens[0].token_id
+                    doc_token_id_end = span_tokens[-1].token_id
+                    # Get Label
+                    label = span_tokens[0].label if isinstance(span_tokens[0].label, str) else span_tokens[0].label[head-1]
+                    domain = span_tokens[0].domain
+                else:
+                    text = ""
+                    doc_token_id_start = None
+                    doc_token_id_end = None
+                    label = None
+                    domain = None
+
+                head_spans.append({
+                'doc_id': span.doc_id,
+                'start_id': span.start_id,
+                'end_id': span.end_id,
+                'doc_token_id_start': doc_token_id_start,
+                'doc_token_id_end': doc_token_id_end,
+                'text': text,
+                'label': label,
+                'head': head,
+                'domain': domain
+            })
+    
+        df = pd.DataFrame(head_spans)
+        # Rename columns for consistency with build_unified_dataframe
+        if not df.empty:
+            df = df.rename(columns={'start_id': 'start', 'end_id': 'end'})
+            df = df.sort_values(by=['start', 'end']).reset_index(drop=True)
+            df = self._assign_span_ids(df, prefix=f"head{head}_")
+        
+        return df
 
 
     def parse(self):
