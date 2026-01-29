@@ -99,7 +99,7 @@ def main(
             for head in categorical_head:
                 categorical_metrics = MetricsForCategoricalSpansAnonymisation(
                     matched_span_precision, matched_span_recall, classification_head=head
-                )(lenient_level=lenient_level, row_name=head)
+                )(lenient_level=lenient_level)
                 list_of_categorical_evaluations.append(categorical_metrics)
         categorical_eval_df = pd.concat(list_of_categorical_evaluations)
         return pd.concat([spans_eval_df, categorical_eval_df])
