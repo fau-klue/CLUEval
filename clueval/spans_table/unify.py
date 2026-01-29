@@ -1,7 +1,9 @@
 import networkx as nx
 
 from itertools import chain
-from collections import Counter, defaultdict
+from collections import  defaultdict
+
+from .utils import majority_vote
 from .data import ParsedSpan, SpanComponent, UnifiedSpan, Token
 
 class MultiHeadSpanTokenUnifier:
@@ -29,9 +31,9 @@ class MultiHeadSpanTokenUnifier:
 
             if all(isinstance(label, list) for label in labels):
                 labels = self.transpose(labels)
-                majority_label = [self.majority_vote(label) for label in labels]
+                majority_label = [majority_vote(label) for label in labels]
             else:
-                majority_label = self.majority_vote(labels)
+                majority_label = majority_vote(labels)
 
             yield UnifiedSpan(start_id=span.start_id,
                                   end_id=span.end_id,
@@ -51,16 +53,6 @@ class MultiHeadSpanTokenUnifier:
         :return:
         """
         return [list(row) for row in zip(*labels)]
-
-    @staticmethod
-    def majority_vote(labels: list[str]):
-        """
-
-        :param labels:
-        :return:
-        """
-        counter = Counter(labels)
-        return counter.most_common(1)[0][0]
 
     @staticmethod
     def map_token_to_index(list_of_tokens:list[Token]):
