@@ -150,7 +150,6 @@ class Match:
     @staticmethod
     def unify_adjacent_spans(grouped_df, headers_column):
         # Select id from span with based on the total number of tokens (longest span)
-        longest_overlap = grouped_df.loc[grouped_df["number_overlapping_tokens_with_x"].idxmax()]
         combined_spans = {"start": grouped_df["start"].iloc[0],
                           "end": grouped_df["end"].iloc[-1],
                           "doc_token_id_start": grouped_df["doc_token_id_start"].iloc[0],
@@ -162,6 +161,11 @@ class Match:
                           "status": grouped_df["status"].iloc[0],
                           "id_x": " | ".join(grouped_df["id_x"])
                           }
+        try:
+            longest_overlap = grouped_df.loc[grouped_df["number_overlapping_tokens_with_x"].idxmax()]
+        except KeyError:
+            longest_overlap = grouped_df
+
         for column in headers_column:
             combined_spans[column] = longest_overlap[column]
         return pd.Series(combined_spans)
