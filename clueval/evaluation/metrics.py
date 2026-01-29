@@ -1,160 +1,207 @@
 from abc import ABC, abstractmethod
-
-import numpy as np
 import pandas as pd
 
 
 class Metrics(ABC):
-    """ Abstract class with methods for computing classification metrics."""
+    """Abstract class with methods for computing classification metrics."""
+
     @abstractmethod
-    def __call__(self, lenient: bool = False):
+    def compute_metrics(self, lenient_level: int = 0, **kwargs):
         pass
 
     @staticmethod
     def precision(true_positives: int, pre_denominator: int):
-        """ Compute precision scores. TP / TP + FP"""
+        """Compute precision scores. TP / TP + FP"""
         return round(100 * true_positives / pre_denominator, 5)
 
     @staticmethod
     def recall(true_positives: int, recall_denominator: int):
-        """ Compute recall scores. TP / TP + FN"""
+        """Compute recall scores. TP / TP + FN"""
         return round(100 * true_positives / recall_denominator, 5)
 
     @staticmethod
     def f1(precision, recall):
-        """ Compute F1. 2*P*R / (P+R)"""
+        """Compute F1. 2*P*R / (P+R)"""
         return round(2 * precision * recall / (precision + recall), 5)
 
 
 class MetricsForSpansAnonymisation(Metrics):
-    def __init__(self, spans_df: pd.DataFrame):
-        self.spans_df = spans_df.loc[~((spans_df.start.isna()) & (spans_df.status == "overlap"))]
+    def __init__(self, precision_table: pd.DataFrame, recall_table: pd.DataFrame):
+        self.precision_table = precision_table
+        self.recall_table = recall_table
+        self.lenient_levels = {
+            0: ["exact"],
+            1: ["exact", "subset"],
+            2: ["exact", "subset", "tiling"],
+            3: ["exact", "subset", "tiling", "overlap"],
+        }
+        self.metrics = dict(
+            P=0.0,
+            R=0.0,
+            F1=0.0,
+            TP_Precision=0,
+            TP_Recall=0,
+            FN=0,
+            FP=0,
+            Support=0,
+            row_name="",
+        )
 
-    def __call__(self, lenient: bool = False, row_name: str = None):
+    def __call__(self, **kwargs):
+        self.compute_metrics(**kwargs)
+        return pd.DataFrame(self.metrics, index=[self.metrics["row_name"]])
+
+    def compute_metrics(self, lenient_level: int = 0, row_name: str = None):
         """
-        Compute evaluation metrics and return a dataframe containing following information:
-        Precision, Recall, F1, False Neg., False Pos., Support and Row Name
-        :param lenient: Boolean indication for relaxed spans evaluation. Default: False -> Compute metrics for exact match
+        Compute evaluation metrics:
+        Precision, Recall, F1, TP_Precision, TP_Recall, FN, FP, Support and Row Name
+        :param lenient_level: Decide whether to include lenient spans or not.
+                Default: 0: only exact matches.
+                Options:
+                - 1: ["exact", "subset"],
+                - 2: ["exact", "subset", "tiling"],
+                - 3: ["exact", "subset", "tiling", "overlap"]
         :param row_name: Row name as index
         """
-        metrics = dict(P=0.0,
-                       R=0.0,
-                       F1=0.0,
-                       FN=0,
-                       FP=0,
-                       support=0,
-                       row_name=row_name
-                       )
+        if 0 <= lenient_level <= 3:
+            # True positive cases for Precision: exact matches and accepted lenient spans
+            tp_precision = self.precision_table[
+                self.precision_table["status"].isin(self.lenient_levels[lenient_level])
+            ].shape[0]
+            # True positive cases for Recall: exact matches and accepted lenient spans
+            tp_recall = self.recall_table[
+                self.recall_table["status"].isin(self.lenient_levels[lenient_level])
+            ].shape[0]
 
-        n_left_spans = self.spans_df[self.spans_df.status != "FP"]["status"].count()
-        n_right_spans = self.spans_df[self.spans_df.status != "FN"]["status"].count()
-        # Lenient will also accept overlapped spans for computing Precision and Recall
-        if lenient:
-            # True positives cases for Precision: TPs + gold annotation that are longer than predictions
-            tp_precision = self.spans_df[self.spans_df.status.str.contains("TP|super")]["status"].count()
-            # True positives cases for Recall: TPs + predictions that are longer than reference
-            tp_recall = self.spans_df[self.spans_df.status.str.contains("TP|sub")]["status"].count()
-            # Compute metrics
-            metrics["P"] = self.precision(tp_precision, n_right_spans)
-            metrics["R"] = self.recall(tp_recall, n_left_spans)
-            metrics["F1"] = self.f1(metrics["P"], metrics["R"])
-            metrics["FN"] = n_left_spans - tp_recall
-            metrics["FP"] = n_right_spans - tp_precision
+            # Update metrics
+            self.metrics["P"] = self.precision(
+                tp_precision, self.precision_table.shape[0]
+            )
+            self.metrics["R"] = self.recall(tp_recall, self.recall_table.shape[0])
+            self.metrics["F1"] = self.f1(self.metrics["P"], self.metrics["R"])
+            self.metrics["TP_Precision"] = self.precision_table[
+                self.precision_table["status"].isin(self.lenient_levels[lenient_level])
+            ].shape[0]
+            self.metrics["TP_Recall"] = self.recall_table[
+                self.recall_table["status"].isin(self.lenient_levels[lenient_level])
+            ].shape[0]
+            self.metrics["FN"] = self.recall_table.shape[0] - tp_recall
+            self.metrics["FP"] = self.precision_table.shape[0] - tp_precision
+            self.metrics["Support"] = self.recall_table.shape[0]
+            self.metrics["row_name"] = row_name
         else:
-            tp = self.spans_df[self.spans_df.status == "TP"]["status"].count()
-            metrics["P"] = self.precision(tp, n_right_spans)
-            metrics["R"] = self.recall(tp, n_left_spans)
-            metrics["F1"] = self.f1(metrics["P"], metrics["R"])
-            metrics["FN"] = n_left_spans - tp
-            metrics["FP"] = n_right_spans - tp
-        metrics["support"] = self.spans_df["text"].count()
-        return pd.DataFrame(metrics, index=[row_name])
+            raise ValueError(
+                f"{lenient_level} is not allowed! Only levels between 0 and 3"
+            )
 
 
 class MetricsForCategoricalSpansAnonymisation(Metrics):
-    def __init__(self, spans_df: pd.DataFrame, column: str = "cat", suffix: str = "_Y"):
-        """
-        Compute metrics for each information category or risk.
-        :param spans_df: Spans dataframe containing annotations (left) and predictions (right).
-        :param column: Entity class column
-        :param suffix: Suffix to extract column from right hand side table.
-        """
-        self.spans_df = spans_df
-        self.status = spans_df.status
-        self.left_categories = self.spans_df[column]
-        self.right_categories = self.spans_df[column + suffix]
-        self.all_categories = sorted([cat for cat in pd.Series(self.left_categories.values,
-                                                               self.right_categories.values).unique()
-                                      if cat is not np.nan
-                                      ]
-                                     )
-        self.left_categories = self.left_categories.fillna("")
-        self.right_categories = self.right_categories.fillna("")
-        self.exact_match_ids = self.left_categories == self.right_categories
-        self.tp_ids = self.status == "TP"
+    def __init__(
+        self,
+        precision_table: pd.DataFrame,
+        recall_table: pd.DataFrame,
+        classification_head: str = "head_0",
+        suffix: str = "_Y",
+    ):
+        self.classification_head = classification_head
+        self.suffix = suffix
+        self.precision_table = precision_table[
+            ["status", classification_head, classification_head + suffix]
+        ]
+        self.precision_cls_head = precision_table[classification_head]
 
-    def __call__(self, lenient: bool = True):
-        """
-        :param lenient: Indicate if relaxed evaluation should be used. Default: True
-        """
-        if lenient:
-            tp_precision_ids = self.tp_ids | (self.status == "super")
-            tp_recall_ids = self.tp_ids | (self.status == "sub")
-        else:
-            tp_precision_ids = tp_recall_ids = self.tp_ids
-        return pd.concat([self.compute_categorical_metrics(cat, tp_precision_ids, tp_recall_ids)
-                          for cat in self.all_categories
-                          ]
-                         )
+        self.recall_table = recall_table[
+            ["status", classification_head, classification_head + suffix]
+        ]
+        self.recall_cls_head = recall_table[classification_head]
 
-    def compute_categorical_metrics(self, category: str, tp_precision: int, tp_recall: int):
+        # Merge categories from precision and recall tables for given classification head
+        self.categories = sorted(
+            [
+                cat
+                for cat in pd.concat(
+                    [self.precision_cls_head, self.recall_cls_head]
+                ).unique()
+                if cat != "O"
+            ]
+        )
+        self.lenient_levels = {
+            0: ["exact"],
+            1: ["exact", "subset"],
+            2: ["exact", "subset", "tiling"],
+            3: ["exact", "subset", "tiling", "overlap"],
+        }
+        self.metrics = dict(
+            P=0.0,
+            R=0.0,
+            F1=0.0,
+            TP_Precision=0,
+            TP_Recall=0,
+            FN=0,
+            FP=0,
+            Support=0,
+            row_name="",
+        )
+
+    def __call__(self, **kwargs):
+        categorical_metrics = []
+        for cat in self.categories:
+            self.compute_metrics(input_category=cat, **kwargs)
+            categorical_metrics.append(
+                pd.DataFrame(self.metrics, index=[cat]).drop(columns=["row_name"])
+            )
+        return pd.concat(categorical_metrics)
+
+    def compute_metrics(self, lenient_level: int = 0, input_category: str = None):
         """
         Method to compute classification metrics for given category.
-        Get number of annotations and predictions for category. Check whether it is not 0. If not do:
-            - determine whether given category is included in annotations or in predictions as sub_ids
-            - compute TP for precision (tp_precision + sub_ids + exact matches)
-            - compute TP for recall (tp_recall + sub_ids + exact matches)
-            - compute precision, recall and f1
-        :param category: Input category
-        :param tp_precision: Pre-determined tp for precision
-        :param tp_recall: Pre-determined tp for recall
+        Compute evaluation metrics:
+        Precision, Recall, F1, TP_Precision, TP_Recall, FN, FP, Support and Row Name
+        :param input_category: Input category
+        :param lenient_level: Decide whether to include lenient spans or not.
+                Default: 0: only exact matches.
+                Options:
+                - 1: ["exact", "subset"],
+                - 2: ["exact", "subset", "tiling"],
+                - 3: ["exact", "subset", "tiling", "overlap"]
         """
-        metrics = dict(P=0.0,
-                       R=0.0,
-                       F1=0.0,
-                       FN=0.0,
-                       FP=0.0,
-                       support=0,
-                       row_name=category
-                       )
-        n_category_left = sum(self.left_categories == category)
-        n_category_right = sum(self.right_categories == category)
-        if not n_category_right == 0 and not n_category_left == 0:
-            sub_ids = (self.left_categories == category) | (self.right_categories == category)
-            tp_precision = sum(tp_precision & sub_ids & self.exact_match_ids)
-            tp_recall = sum(tp_recall & sub_ids & self.exact_match_ids)
-            metrics["P"] = self.precision(tp_precision, n_category_right)
-            metrics["R"] = self.recall(tp_recall, n_category_left)
+        # Conditions for TP:
+        # 1. Exact match and additional lenient levels
+        # 2. x_head equals input category
+        # 3. x_head == x_head_Y, where x_head is the reference column and x_head_Y is the candidate column
+        tp_precision = self.precision_table[
+            (self.precision_table["status"].isin(self.lenient_levels[lenient_level]))
+            & (self.precision_table[self.classification_head] == input_category)
+            & (
+                self.precision_table[self.classification_head]
+                == self.precision_table[self.classification_head + self.suffix]
+            )
+        ].shape[0]
+        tp_recall = self.recall_table[
+            (self.recall_table["status"].isin(self.lenient_levels[lenient_level]))
+            & (self.recall_table[self.classification_head] == input_category)
+            & (
+                self.recall_table[self.classification_head]
+                == self.recall_table[self.classification_head + self.suffix]
+            )
+        ].shape[0]
+
+        # Total amount of input category as denominator
+        n_category_precision = sum(self.precision_cls_head == input_category)
+        n_category_recall = sum(self.recall_cls_head == input_category)
+
+        # Update metrics
+        if n_category_precision != 0 and n_category_recall != 0:
+            self.metrics["P"] = self.precision(tp_precision, n_category_precision)
+            self.metrics["R"] = self.recall(tp_recall, n_category_recall)
             # Return F1 = 0.0 if ZeroDivisionError occurs.
-            # This is the case when we evaluate AG models on OLG data and do not have predictions for certain categories.
             try:
-                metrics["F1"] = self.f1(metrics["P"], metrics["R"])
+                self.metrics["F1"] = self.f1(self.metrics["P"], self.metrics["R"])
             except ZeroDivisionError:
                 metrics["F1"] = 0.0
-        metrics["FN"] = n_category_left - tp_recall
-        metrics["FP"] = n_category_right - tp_precision
-        metrics["support"] = n_category_left
-        return pd.DataFrame(metrics, index=[category])
+        self.metrics["TP_Precision"] = tp_precision
+        self.metrics["TP_Recall"] = tp_recall
+        self.metrics["FN"] = n_category_recall - tp_recall
+        self.metrics["FP"] = n_category_precision - tp_precision
+        self.metrics["Support"] = n_category_recall
 
-    def annotate(self, tp_recall_ids):
-        # TODO: Refactor this part?
-        errors = pd.Series(["" for _ in range(self.status.shape[0])])
-        partial_match_ids = self.status.isin(["sub", "super", "overlap"])
-        errors.iloc[tp_recall_ids & self.exact_match_ids] = "TP"
-        errors.iloc[tp_recall_ids & ~self.exact_match_ids] = "wrong"
-        errors.iloc[self.status == "FP"] = "FP"
-        errors.iloc[self.status == "FN"] = "FN"
-        errors.iloc[partial_match_ids & ~tp_recall_ids & self.exact_match_ids] = "partial"
-        errors.iloc[partial_match_ids & ~tp_recall_ids & ~self.exact_match_ids] = "partwrong"
-        self.spans_df["error"] = errors
-        return self.spans_df
