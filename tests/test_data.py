@@ -4,7 +4,7 @@ from clueval.spans_table import Convert
 
 def test_converter(p1):
 
-    converter = Convert(p1)
+    converter = Convert(p1, annotation_layer=["head_0", "head_1", "head_2"])
     print(converter)
     df = converter(id_prefix="reference")
    
