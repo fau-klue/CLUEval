@@ -88,17 +88,17 @@ def main(
         if not categorical_head:
             raise ValueError(f"Can not filter {categorical_head} by None")
         list_of_categorical_evaluations = []
-        if isinstance(categorical_head, int):
+        if isinstance(categorical_head, str):
             categorical_metrics = MetricsForCategoricalSpansAnonymisation(
-                precision_prep_table,
-                recall_prep_table,
+                matched_span_precision,
+                matched_span_recall,
                 classification_head=categorical_head,
             )(lenient_level=lenient_level, row_name=categorical_head)
             list_of_categorical_evaluations.append(categorical_metrics)
         else:
             for head in categorical_head:
                 categorical_metrics = MetricsForCategoricalSpansAnonymisation(
-                    precision_prep_table, recall_prep_table, classification_head=head
+                    matched_span_precision, matched_span_recall, classification_head=head
                 )(lenient_level=lenient_level, row_name=head)
                 list_of_categorical_evaluations.append(categorical_metrics)
         categorical_eval_df = pd.concat(list_of_categorical_evaluations)
