@@ -1,9 +1,11 @@
+import pandas as pd
+from collections import defaultdict
+
+from .utils import majority_vote
 from .data import ParsedSpan, Token
 from .parser import BioToSpanParser
 from .unify import OverlapComponentUnifier, MultiHeadSpanTokenUnifier
 
-from collections import defaultdict
-import pandas as pd
 
 
 class Convert:
@@ -15,13 +17,15 @@ class Convert:
         self.doc_id_column = doc_id_column
 
 
-    def __call__(self, id_prefix="id"):
+    def __call__(self, id_prefix="id", head:int=None):
         # spans_df = self.build_unified_dataframe()
-        spans_df = self.build_head_wise_dataframe()
-        spans_df = spans_df.join(spans_df["label"].apply(pd.Series).add_prefix("head_")).drop(columns="label").rename(columns={"start_id": "start",
-                                                                                                                               "end_id": "end"
-                                                                                                                               }
-                                                                                                                      )
+        if head is not None:
+            spans_df = self.build_head_wise_dataframe(head=head)
+        else:
+            spans_df = self.build_unified_dataframe()
+            spans_df = (spans_df.join(spans_df["label"].apply(pd.Series).add_prefix("head_")).drop(columns="label"))
+
+        spans_df.rename(columns={"start_id": "start", "end_id": "end"}, inplace=True)
         spans_df = spans_df.sort_values(by=["start", "end"])
         spans_df = self._assign_span_ids(spans_df, prefix=id_prefix)
         return spans_df
@@ -63,7 +67,8 @@ class Convert:
                     doc_token_id_start = span_tokens[0].token_id
                     doc_token_id_end = span_tokens[-1].token_id
                     # Get Label
-                    label = span_tokens[0].label if isinstance(span_tokens[0].label, str) else span_tokens[0].label[head-1]
+                    labels = [token.label[head] for token in span_tokens]
+                    label = majority_vote(labels)
                     domain = span_tokens[0].domain
                 else:
                     text = ""
@@ -73,15 +78,14 @@ class Convert:
                     domain = None
 
                 head_spans.append({
-                'doc_id': span.doc_id,
-                'start_id': span.start_id,
-                'end_id': span.end_id,
-                'doc_token_id_start': doc_token_id_start,
-                'doc_token_id_end': doc_token_id_end,
-                'text': text,
-                'label': label,
-                'head': head,
-                'domain': domain
+                "doc_id": span.doc_id,
+                "start_id": span.start_id,
+                "end_id": span.end_id,
+                "doc_token_id_start": doc_token_id_start,
+                "doc_token_id_end": doc_token_id_end,
+                "text": text,
+                "label": label,
+                "domain": domain
             })
     
         df = pd.DataFrame(head_spans)
