@@ -16,4 +16,4 @@ def test_converter(p1):
     assert sorted(df.columns.tolist()) == sorted(required_columns)
 
      # test id prefix
-    assert df1["id"][0].startswith("reference")
+    assert df["id"][0].startswith("reference")
