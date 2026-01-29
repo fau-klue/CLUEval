@@ -1,13 +1,17 @@
-from clueval.evaluation import evaluate
+from clueval.evaluation import main 
 
 
 
 def test_evaluate(p1, p2):
-    evaluate(p1, p2, annotation_layer="layer1")
-    evaluate(p1, p2, annotation_layer=["layer1", "layer2"])
-    evaluate(p1, p2, annotation_layer=["layer1", "layer2"], categorical_evaluation=True)
+    main(p1, p2, annotation_layer="head_0")
+    main(p1, p2, annotation_layer="head_1")
+    main(p1, p2, annotation_layer=["head_0", "head_1", "head_2"])
+    main(p1, p2, annotation_layer=["head_0", "head_1", "head_2"], categorical_evaluation=True, categorical_head=["head_1", "head_2"])
 
-def test_evaluate_same(p1):
-    evaluate(p1, p1, annotation_layer="layer1")
-    evaluate(p1, p1, annotation_layer=["layer1", "layer2"])
-    evaluate(p1, p1, annotation_layer=["layer1", "layer2"], categorical_evaluation=True)
+
+def test_evaluate_same_file(p1):
+    main(p1, p1, annotation_layer="head_0")
+    main(p1, p1, annotation_layer="head_1")
+    main(p1, p1, annotation_layer=["head_0", "head_1", "head_2"])
+    main(p1, p1, annotation_layer=["head_0", "head_1", "head_2"], categorical_evaluation=True, categorical_head=["head_1", "head_2"])
+
