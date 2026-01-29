@@ -9,7 +9,7 @@ from .unify import OverlapComponentUnifier, MultiHeadSpanTokenUnifier
 
 
 class Convert:
-    def __init__(self, path_to_file:str, annotation_layer:str|list[str] | None=None, token_id_column: int=None, domain_column:int | None=None, doc_id_column:int | None=None):
+    def __init__(self, path_to_file:str, annotation_layer:str|list[str]| None=None, token_id_column:int|None=None, domain_column:int|None=None, doc_id_column:int|None=None):
         self.path_to_file = path_to_file
         self.annotation_layer = annotation_layer
         self.token_id_column = token_id_column
@@ -17,7 +17,7 @@ class Convert:
         self.doc_id_column = doc_id_column
 
 
-    def __call__(self, id_prefix="id", head:int=None):
+    def __call__(self, id_prefix="id", head:int|None=None):
         # spans_df = self.build_unified_dataframe()
         if head is not None:
             spans_df = self.build_head_wise_dataframe(head=head)
