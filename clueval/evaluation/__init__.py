@@ -7,13 +7,13 @@ from .metrics import (
 )
 import pandas as pd
 
-
 def main(
     path_reference: str,
     path_candidate: str,
     annotation_layer: str | list[str],
     token_id_column: int | None = None,
     domain_column: int | None = None,
+    doc_id_column: int | None = None,
     filter_head: str | None = None,
     head_value: str | None = None,
     categorical_evaluation: bool = False,
@@ -35,6 +35,7 @@ def main(
         annotation_layer=annotation_layer,
         token_id_column=token_id_column,
         domain_column=domain_column,
+        doc_id_column=doc_id_column,
     )
     reference_df = reference_converter()
 
@@ -43,6 +44,7 @@ def main(
         annotation_layer=annotation_layer,
         token_id_column=token_id_column,
         domain_column=domain_column,
+        doc_id_column=doc_id_column,
     )
     candidate_df = candidate_converter()
 
@@ -66,22 +68,22 @@ def main(
 
         filtered_span_metrics = MetricsForSpansAnonymisation(
             precision_table=matched_span_precision[
-                matched_span_precision[filter_head + "_Y"] == head_value
+                matched_span_precision["head_" + filter_head + "_Y"] == head_value
             ],
             recall_table=matched_span_recall[
-                matched_span_recall[filter_head] == head_value
+                matched_span_recall["head_" + filter_head] == head_value
             ],
         )(lenient_level=lenient_level, row_name=head_value.capitalize())
         list_of_span_evaluation.append(filtered_span_metrics)
 
     # Evaluation
     spans_eval_df = (
-        pd.concat(list_of_span_evaluation)[["P", "R", "F1", "FN", "FP", "Support"]]
+        pd.concat(list_of_span_evaluation)[["P", "R", "F1", "TP_Precision", "TP_Recall", "FP", "FN", "Support"]]
         .reset_index()
         .rename(columns={"index": "Span", "support": "Support"})
     )
-    spans_eval_df["Level"] = "Span"
-    spans_eval_df.rename(columns={"Span": "Value"}, inplace=True)
+    spans_eval_df["Label"] = "Span"
+    spans_eval_df.rename(columns={"Span": "Level"}, inplace=True)
 
     # Compute metrics for categorical spans
     if categorical_evaluation:
@@ -98,10 +100,15 @@ def main(
         else:
             for head in categorical_head:
                 categorical_metrics = MetricsForCategoricalSpansAnonymisation(
-                    matched_span_precision, matched_span_recall, classification_head=head
-                )(lenient_level=lenient_level)
+                    matched_span_precision,
+                    matched_span_recall,
+                    classification_head=head,
+                )(lenient_level=lenient_level)[["P", "R", "F1", "TP_Precision", "TP_Recall", "FP", "FN", "Support"]]
+                categorical_metrics["Level"] =  head
                 list_of_categorical_evaluations.append(categorical_metrics)
         categorical_eval_df = pd.concat(list_of_categorical_evaluations)
+        categorical_eval_df["Label"] = categorical_eval_df.index
+        categorical_eval_df.reset_index(drop=True, inplace=True)
         return pd.concat([spans_eval_df, categorical_eval_df])
     else:
         return spans_eval_df
