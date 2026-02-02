@@ -148,7 +148,9 @@ class MetricsForCategoricalSpansAnonymisation(Metrics):
         for cat in self.categories:
             self.compute_metrics(input_category=cat, **kwargs)
             categorical_metrics.append(
-                pd.DataFrame(self.metrics, index=[cat.capitalize()]).drop(columns="row_name")
+                pd.DataFrame(self.metrics, index=[cat.capitalize()]).drop(
+                    columns="row_name"
+                )
             )
         return pd.concat(categorical_metrics)
 
@@ -191,14 +193,20 @@ class MetricsForCategoricalSpansAnonymisation(Metrics):
         n_category_recall = sum(self.recall_cls_head == input_category)
 
         # Update metrics
-        if n_category_precision != 0 and n_category_recall != 0:
+        if n_category_precision != 0:
             self.metrics["P"] = self.precision(tp_precision, n_category_precision)
+        else:
+            self.metrics["P"] = 0.0
+        if n_category_recall != 0:
             self.metrics["R"] = self.recall(tp_recall, n_category_recall)
-            # Return F1 = 0.0 if ZeroDivisionError occurs.
-            try:
-                self.metrics["F1"] = self.f1(self.metrics["P"], self.metrics["R"])
-            except ZeroDivisionError:
-                self.metrics["F1"] = 0.0
+        else:
+            self.metrics["R"] = 0.0
+        # Return F1 = 0.0 if ZeroDivisionError occurs.
+        try:
+            self.metrics["F1"] = self.f1(self.metrics["P"], self.metrics["R"])
+        except ZeroDivisionError:
+            self.metrics["F1"] = 0.0
+
         self.metrics["TP_Precision"] = tp_precision
         self.metrics["TP_Recall"] = tp_recall
         self.metrics["FN"] = n_category_recall - tp_recall
