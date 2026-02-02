@@ -48,17 +48,17 @@ def arguments():
     )
 
     parser.add_argument(
-        "-fh",
+        "-f",
         "--filter_head",
         type=str,
         default=None,
         help="Column name for filtering.",
     )
     parser.add_argument(
-        "-fv", "--filter_value", type=str, default=None, help="Filter column by value."
+        "-hv", "--head_value", type=str, default=None, help="Filter column by value."
     )
     parser.add_argument(
-        "-ce",
+        "-c",
         "--categorical_eval",
         action="store_true",
         help="Compute metrics for each category.",
@@ -93,7 +93,7 @@ if __name__ == "__main__":
         domain_column=args.domain_column,
         doc_id_column=args.doc_id_column,
         filter_head=args.filter_head,
-        head_value=args.filter_value,
+        head_value=args.head_value,
         categorical_evaluation=args.categorical_eval,
         categorical_head=args.categorical_head,
         lenient_level=args.lenient_level,
