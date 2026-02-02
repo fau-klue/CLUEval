@@ -148,7 +148,7 @@ class MetricsForCategoricalSpansAnonymisation(Metrics):
         for cat in self.categories:
             self.compute_metrics(input_category=cat, **kwargs)
             categorical_metrics.append(
-                pd.DataFrame(self.metrics, index=[cat]).drop(columns=["row_name"])
+                pd.DataFrame(self.metrics, index=[cat.capitalize()]).drop(columns="row_name")
             )
         return pd.concat(categorical_metrics)
 
@@ -198,10 +198,10 @@ class MetricsForCategoricalSpansAnonymisation(Metrics):
             try:
                 self.metrics["F1"] = self.f1(self.metrics["P"], self.metrics["R"])
             except ZeroDivisionError:
-                metrics["F1"] = 0.0
+                self.metrics["F1"] = 0.0
         self.metrics["TP_Precision"] = tp_precision
         self.metrics["TP_Recall"] = tp_recall
         self.metrics["FN"] = n_category_recall - tp_recall
         self.metrics["FP"] = n_category_precision - tp_precision
         self.metrics["Support"] = n_category_recall
-
+        self.metrics["row_name"] = input_category
