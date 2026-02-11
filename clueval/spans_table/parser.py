@@ -1,8 +1,35 @@
 import re
-import pandas as pd
-
 from .data import ParsedSpan, Token
 
+
+class BioToSentenceParser:
+    def __init__(self, path):
+        self.path = path
+        self.token_id = 0
+        
+    def __call__(self):
+        sents = dict(token_ids=[], sents=[])
+        with open(self.path, "r", encoding="utf-8") as infile:
+            readfile = infile.readlines()
+            for token_ids, sent in self._generate(readfile):
+                sents["token_ids"].append(token_ids)
+                sents["sents"].append(sent)
+        return sents
+        
+    def _generate(self, readfile):
+        sent, token_ids = [], []
+        for line in readfile:
+            if ("newdoc id" not in line and
+                "sent_id" not in line
+               ):
+                if line.strip() != "":
+                    token = line.split("\t")[0]
+                    sent.append(token)
+                    token_ids.append(self.token_id+1)
+                    self.token_id += 1
+                else:
+                    yield token_ids, sent
+                    token_ids, sent = [], []
 
 class BioToSpanParser:
     """Convert BIO into spans."""

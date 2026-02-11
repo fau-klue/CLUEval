@@ -12,9 +12,7 @@ class Match:
         exact = self.exact_match(self.x, self.y, on=on, suffixes=suffixes)
         rest = self.rest_match(exact, suffixes=suffixes)
         match_df = pd.concat([exact, rest], ignore_index=True).sort_values(by=["start", "end"])
-        match_df.drop(columns=[f"start{suffixes[1]}",
-                            f"end{suffixes[1]}",
-                            "id",
+        match_df.drop(columns=["id",
                             "id_y",
                             f"id{suffixes[1]}",
                             f"domain{suffixes[1]}",
@@ -24,6 +22,8 @@ class Match:
         # Fill Nan values in label columns with "FN"
         for column in [col for col in match_df.columns if col.startswith("head_")]:
             match_df.fillna({column: "FN"}, inplace=True)
+        match_df.loc[match_df[["start_Y", "end_Y"]].isna().any(axis=1), ["start_Y", "end_Y"]] = -100
+        match_df[["start_Y", "end_Y"]] = match_df[["start_Y", "end_Y"]].astype("Int64")
         return match_df
 
     @staticmethod
