@@ -117,7 +117,7 @@ recall_matching.head()
 
 |   start |   end | token_id_start | token_id_end | text                             | doc_id | domain | anon   | entity       | risk    | token_id_start_Y   | token_id_end_Y   | text_Y                           | doc_id_Y   | domain_Y   | anon_Y   | entity_Y     | risk_Y   | status   |   start_Y |   end_Y |
 |--------:|------:|:---------------|:-------------|:---------------------------------|:-------|:-------|:-------|:-------------|:--------|:-------------------|:-----------------|:---------------------------------|:-----------|:-----------|:---------|:-------------|:---------|:---------|----------:|--------:|
-|       2 |     3 |                |              | AMTSGERICHT ERLANGEN             |        |        | anon   | court-name   | niedrig |                    |                  | AMTSGERICHT ERLANGEN             |            |            | anon     | court-name   | niedrig  | exact    |         2 |       3 |
+|       2 |     3 |                |              | AMTSGERICHT ERLANGEN             |        |        | anon   | court-name   | niedrig |                    |                  |                                  |            |            |          |              |          | unmatch  |      -100 |    -100 |
 |       7 |     9 |                |              | 11 C 122/20                      |        |        | anon   | court-docket | niedrig |                    |                  | 11 C 122/20                      |            |            | anon     | court-docket | niedrig  | exact    |         7 |       9 |
 |      10 |    14 |                |              | Mozartstraße 23 , 91052 Erlangen |        |        | anon   | address-name | hoch    |                    |                  | Mozartstraße 23 , 91052 Erlangen |            |            | anon     | address-name | hoch     | exact    |        10 |      14 |
 |      17 |    21 |                |              | 09131 / 782 - 01                 |        |        | anon   | code-idx     | niedrig |                    |                  | 09131 / 782 - 01                 |            |            | anon     | code-idx     | niedrig  | exact    |        17 |      21 |
@@ -133,7 +133,7 @@ span_metrics = MetricsForSpansAnonymisation(precision_table=precision_table, rec
 span_metrics(lenient_level=1, row_name="Span Anonymisation")
 
 #              P         R        F1  TP_Precision  ...  FN  FP  Support  row_name
-# Span  91.42857  91.42857  91.42857            64  ...   6   6       70      Span
+# Span  85.71429  85.71429  85.71429            60  ...  10  10       70      Span
 ```
 ```python
 from clueval.evaluation import MetricsForCategoricalSpansAnonymisation
@@ -142,9 +142,9 @@ categorical_metrics = MetricsForCategoricalSpansAnonymisation(precision_table, r
 categorical_metrics(lenient_level=0)
 
 #                 P         R        F1  TP_Precision  TP_Recall  FN  FP  Support
-# Hoch     96.96970  96.96970  96.96970            32         32   1   1       33
+# Hoch     78.37838  87.87879  82.85714            29         29   4   8       33
 # Mittel   66.66667  66.66667  66.66667             2          2   1   1        3
-# Niedrig  81.81818  81.81818  81.81818            27         27   6   6       33
+# Niedrig  92.85714  78.78788  85.24590            26         26   7   2       33
 ```
 
 #### Error Analysis
