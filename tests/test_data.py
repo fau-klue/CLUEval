@@ -11,7 +11,7 @@ def test_converter(p1):
     # test not empty
     assert df.shape[0] != 0
     # test required columns
-    required_columns = ["start", "end", "doc_token_id_start" , "doc_token_id_end", "text" , "doc_id", "domain", "head_0", "head_1", "head_2", "id"]
+    required_columns = ["start", "end", "token_id_start" , "token_id_end", "text" , "doc_id", "domain", "head_0", "head_1", "head_2", "id"]
 
     assert sorted(df.columns.tolist()) == sorted(required_columns)
 
