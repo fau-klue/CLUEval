@@ -1,1 +1,1 @@
-from .table import TableForErrorAnalysis, highlight_text_with_squares
+from .table import ErrorTable
