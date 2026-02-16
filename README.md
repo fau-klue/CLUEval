@@ -162,7 +162,9 @@ fn_table = recall_table(recall_table["status"].isin(["unmatch"]))
 error_analysis = ErrorTable(match_table=fn_table, candidate_table=candidate, token_position_sentence_mapping=reference_sentences)
 erroneous_table = error_analysis(headers=["entity", "risk", "risk_Y"], windows=10)
 erroneous_table.head(1)
-```
+
 | token_id_start   | token_id_end   |   token_id_start_Y |   token_id_end_Y | domain   | entity       | risk    | risk_Y   | reference            | candidate   | context                                                                                                                                | error_type   | comment   |
 |:-----------------|:---------------|-------------------:|-----------------:|:---------|:-------------|:--------|:---------|:---------------------|:------------|:---------------------------------------------------------------------------------------------------------------------------------------|:-------------|:----------|
 | ---              | ---            |               -100 |             -100 | ---      | court-name   | niedrig | ---      | AMTSGERICHT ERLANGEN | ---         | ---------- 🟥AMTSGERICHT ERLANGEN🟥 ----------                                                                                         | unmatch      |           |
+
+```
