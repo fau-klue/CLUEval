@@ -108,7 +108,7 @@ Kollegen	I-anon	I-nat-jur	I-hoch
 Züricher	B-anon	B-address-name	B-hoch
 Straße	I-anon	I-address-name	I-hoch
 10	I-anon	I-address-name	I-hoch
-,	I-anon	I-address-name	I-hoch
+,	O	O	O
 90431	I-anon	I-address-name	I-hoch
 Nürnberg	I-anon	I-address-name	I-hoch
 
@@ -136,7 +136,7 @@ SCHÜTZ	I-anon	I-nat-name	I-hoch
 ,	O	O	O
 Feldstraße	B-anon	B-address-name	B-hoch
 4	I-anon	I-address-name	I-hoch
-d	I-anon	I-address-name	I-hoch
+d	O	O	O
 ,	I-anon	I-address-name	I-hoch
 91096	I-anon	I-address-name	I-hoch
 Möhrendorf	I-anon	I-address-name	I-hoch
@@ -161,7 +161,7 @@ Steinbrecher	B-anon	B-nat-jur	B-hoch
 +	I-anon	I-nat-jur	I-hoch
 Amberger	I-anon	I-nat-jur	I-hoch
 Rechtsanwälte	I-anon	I-nat-jur	I-hoch
-PartGmbB	I-anon	I-nat-jur	I-mittel
+PartGmbB	O	O	O
 ,	O	O	O
 Gothestraße	B-anon	B-address-name	B-hoch
 25	I-anon	I-address-name	I-hoch
