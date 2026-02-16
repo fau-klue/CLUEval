@@ -41,7 +41,7 @@ class BioToSpanParser:
         self,
         tag_column: int = 1,
         n_tag_columns: int = 1,
-        doc_token_id_column: int | None = None,
+        token_id_column: int | None = None,
         domain_column: int | None = None,
         doc_id_column: int | None = None,
         extract_tokens: bool | None = False,
@@ -59,7 +59,7 @@ class BioToSpanParser:
         if extract_tokens:
             for token in self.extract_tokens_from_iob(
                 n_tag_columns=n_tag_columns,
-                doc_token_id_column=doc_token_id_column,
+                token_id_column=token_id_column,
                 domain_column=domain_column,
                 doc_id_column=doc_id_column,
             ):
@@ -70,13 +70,13 @@ class BioToSpanParser:
     def extract_tokens_from_iob(
         self,
         n_tag_columns=1,
-        doc_token_id_column: int | None = None,
+        token_id_column: int | None = None,
         domain_column: int | None = None,
         doc_id_column: int | None = None,
     ):
         """
         :param n_tag_columns:
-        :param doc_token_id_column:
+        :param token_id_column:
         :param domain_column:
         :param doc_id_column:
         """
@@ -97,8 +97,8 @@ class BioToSpanParser:
                         doc_id = None
 
                     # Extract token id if exists
-                    if doc_token_id_column:
-                        token_id = current_line[doc_token_id_column]
+                    if token_id_column:
+                        token_id = current_line[token_id_column]
 
                     position += 1
                     # We assume that the tag column is directly adjacent to the token column
@@ -183,8 +183,8 @@ class BioToSpanParser:
                             or next_label != label
                         ):
                             yield ParsedSpan(
-                                start_id=start_id,
-                                end_id=token_id,
+                                position_start=start_id,
+                                position_end=token_id,
                                 doc_id=current_doc_id,
                                 head=tag_column,
                             )
