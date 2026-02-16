@@ -1,8 +1,4 @@
 import pandas as pd
-import re
-
-from pandas.core.common import cast_scalar_indexer
-
 
 class ErrorTable:
     def __init__(self, match_table: pd.DataFrame, candidate_table: pd.DataFrame, token_position_sentence_mapping:dict):
