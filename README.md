@@ -1,5 +1,3 @@
-from bin.clueval.evaluation import MetricsForSpansAnonymisation
-
 # CLUEval
 
 CLUEval is a simple Python module for evaluating text anonymisation using token classification. It provides common metrics such as Precision, Recall and F1-score with the options for a more lenient evaluation.
