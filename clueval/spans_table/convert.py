@@ -11,7 +11,7 @@ class Convert:
     def __init__(
         self,
         path_to_file: str,
-        annotation_layer: str | list[str] | None = None,
+        annotation_layer: str | list[str],
         token_id_column: int | None = None,
         domain_column: int | None = None,
         doc_id_column: int | None = None,
@@ -21,6 +21,7 @@ class Convert:
         self.token_id_column = token_id_column
         self.domain_column = domain_column
         self.doc_id_column = doc_id_column
+        self.annotation_layer_mapping = {str(i): layer for i, layer in enumerate(annotation_layer)}
 
     def __call__(self, id_prefix="id", head: int | None = None):
         if head is not None:
@@ -31,9 +32,10 @@ class Convert:
                 spans_df["label"].apply(pd.Series).add_prefix("head_")
             ).drop(columns="label")
 
-        spans_df.rename(columns={"start_id": "start", "end_id": "end"}, inplace=True)
+        spans_df.rename(columns={"position_start": "start", "position_end": "end"}, inplace=True)
         spans_df = spans_df.sort_values(by=["start", "end"])
         spans_df = self._assign_span_ids(spans_df, prefix=id_prefix)
+        spans_df.rename(columns={f"head_{k}": v for k,v in self.annotation_layer_mapping.items()}, inplace=True)
         return spans_df
 
     def build_unified_dataframe(self):
@@ -119,7 +121,7 @@ class Convert:
         list_of_spans, list_of_tokens = parser(
             tag_column=1,
             n_tag_columns=n_tag_columns,
-            doc_token_id_column=self.token_id_column,
+            token_id_column=self.token_id_column,
             domain_column=self.domain_column,
             doc_id_column=self.doc_id_column,
             extract_tokens=True,
@@ -129,7 +131,7 @@ class Convert:
             for i in range(1, len(self.annotation_layer)):
                 spans_per_layer, _ = parser(
                     tag_column=i + 1,
-                    doc_token_id_column=self.token_id_column,
+                    token_id_column=self.token_id_column,
                     domain_column=self.domain_column,
                     doc_id_column=self.doc_id_column,
                     extract_tokens=False,
