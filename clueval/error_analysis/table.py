@@ -12,7 +12,7 @@ class ErrorTable:
     
     def __call__(self,  headers:list[str], windows:int=10):
         overlaps = []
-        intermediate_table = self.match_table[["start", "end", "token_id_start", "token_id_end", "text", "status"] + headers].copy()
+        intermediate_table = self.match_table[["start", "end", "token_id_start", "token_id_end", "domain", "text", "status"] + headers].copy()
         # Check for all overlapping spans from candidate table
         for i, row in intermediate_table.iterrows():
             overlap = self.candidate_table[~((row["end"] < self.candidate_table["start"]) | (self.candidate_table["end"] < row["start"]))]
@@ -21,11 +21,22 @@ class ErrorTable:
                 _overlap["start_X"] = row["start"]
                 _overlap["end_X"] = row["end"]
                 overlaps.append(_overlap)
-        overlap_df = pd.concat(overlaps)
-        # Left join -> Merge all possible overlaps to intermediate_table
-        joined_overlap_df = intermediate_table.merge(overlap_df, how="left", left_on=["start", "end"], right_on=["start_X", "end_X"], suffixes=("", "_Y"))
-        joined_overlap_df.loc[joined_overlap_df[["start_Y", "end_Y"]].isna().any(axis=1), ["start_Y", "end_Y"]] = -100
-        joined_overlap_df[["start_Y", "end_Y"]] = joined_overlap_df[["start_Y", "end_Y"]].astype("Int64")
+        # Handle empty overlap
+        try:
+            overlap_df = pd.concat(overlaps)
+            # Left join -> Merge all possible overlaps to intermediate_table
+            joined_overlap_df = intermediate_table.merge(overlap_df, how="left", left_on=["start", "end"],
+                                                         right_on=["start_X", "end_X"], suffixes=("", "_Y"))
+            joined_overlap_df.loc[joined_overlap_df[["start_Y", "end_Y"]].isna().any(axis=1), ["start_Y", "end_Y"]] = -100
+            joined_overlap_df[["start_Y", "end_Y"]] = joined_overlap_df[["start_Y", "end_Y"]].astype("Int64")
+        except ValueError:
+            joined_overlap_df = intermediate_table
+            joined_overlap_df["start_Y"] = -100
+            joined_overlap_df["end_Y"] = -100
+            joined_overlap_df["token_id_start_Y"] = -100
+            joined_overlap_df["token_id_end_Y"] = -100
+            joined_overlap_df["text_Y"] = None
+
         erroneous_table = self.extract_and_highlight_spans(joined_overlap_df, self.token_position_sentence_mapping, windows=windows)
         erroneous_table = erroneous_table[["token_id_start",
                                               "token_id_end",
