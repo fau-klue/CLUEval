@@ -1,3 +1,5 @@
+from bin.clueval.evaluation import MetricsForSpansAnonymisation
+
 # CLUEval
 
 CLUEval is a simple Python module for evaluating text anonymisation using token classification. It provides common metrics such as Precision, Recall and F1-score with the options for a more lenient evaluation.
@@ -98,7 +100,7 @@ You will need to import:
 
 #### Create span dataframe for reference and prediction files
 ```python
-from spans_table import Convert, Match
+from clueval.spans_table import Convert, Match
 
 ref_converter = Convert(path_to_file="./tests/data/fiktives-urteil-p1.bio",  annotation_layer=["anon", "entity", "risk"])
 cand_converter = Convert(path_to_file="./tests/data/fiktives-urteil-p2.bio", annotation_layer=["anon", "entity", "risk"])
@@ -127,6 +129,7 @@ recall_matching.head()
 #### Evaluation
 
 ```python
+from clueval.evaluation import MetricsForSpansAnonymisation
 # Span-wise evaluation
 span_metrics = MetricsForSpansAnonymisation(precision_table=precision_table, recall_table=recall_table)
 span_metrics(lenient_level=1, row_name="Span Anonymisation")
@@ -135,6 +138,7 @@ span_metrics(lenient_level=1, row_name="Span Anonymisation")
 # Span  91.42857  91.42857  91.42857            64  ...   6   6       70      Span
 ```
 ```python
+from clueval.evaluation import MetricsForCategoricalSpansAnonymisation
 # Categorical span evaluation
 categorical_metrics = MetricsForCategoricalSpansAnonymisation(precision_table, recall_table, classification_head="risk")
 categorical_metrics(lenient_level=0)
@@ -149,8 +153,8 @@ categorical_metrics(lenient_level=0)
 You just need to use `ErrorTable` from `error_analysis` to generate a table for error analysis. Additionally, in order to add context information, you need to use `BIOToSentenceParser` from `spans_table` that maps corpus position to corresponding token.
 
 ```python
-from error_analysis import ErrorTable
-from spans_table import BIOToSentenceParser
+from clueval.error_analysis import ErrorTable
+from clueval.spans_table import BIOToSentenceParser
 
 reference_sentences = BioToSentenceParser("./tests/data/fiktives-urteil-p1.bio")()
 # {'token_ids': [[1, 2, 3, 4], ...], 'sents': [['----------', 'AMTSGERICHT', 'ERLANGEN', '----------'], ...]}
