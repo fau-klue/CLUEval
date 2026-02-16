@@ -23,7 +23,7 @@ class Match:
             match_df.fillna({column: "FN"}, inplace=True)
         match_df.loc[match_df[["start_Y", "end_Y"]].isna().any(axis=1), ["start_Y", "end_Y"]] = -100
         match_df[["start_Y", "end_Y"]] = match_df[["start_Y", "end_Y"]].astype("Int64")
-        return match_df
+        return match_df.reset_index(drop=True)
 
     @staticmethod
     def exact_match(x:pd.DataFrame, y: pd.DataFrame, on:str|list[str]):

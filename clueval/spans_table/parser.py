@@ -89,18 +89,16 @@ class BioToSpanParser:
             lines = in_f.readlines()
             for i, line in enumerate(lines):
                 current_line = line.strip().split("\t")
-                # Extract document id if available
                 if len(current_line) > 1:
+                    position += 1
+                    # Extract document id if available
                     if doc_id_column is not None:
                         doc_id = current_line[doc_id_column]
                     else:
                         doc_id = None
-
                     # Extract token id if exists
                     if token_id_column:
                         token_id = current_line[token_id_column]
-
-                    position += 1
                     # We assume that the tag column is directly adjacent to the token column
                     token = current_line[0]
                     if n_tag_columns == 1:
@@ -158,10 +156,10 @@ class BioToSpanParser:
 
                 # Extract spans based on predicted tags
                 if len(current_line) > 1:
+                    token_id += 1
                     # Check if doc_id != current_doc_id
                     if doc_id != current_doc_id:
                         current_doc_id = doc_id
-                    token_id += 1
                     current_tag = current_line[tag_column]
                     # Start processing line if current tag is not "O"
                     if current_tag != "O":

@@ -36,7 +36,7 @@ class Convert:
         spans_df = spans_df.sort_values(by=["start", "end"])
         spans_df = self._assign_span_ids(spans_df, prefix=id_prefix)
         spans_df.rename(columns={f"head_{k}": v for k,v in self.annotation_layer_mapping.items()}, inplace=True)
-        return spans_df
+        return spans_df.reset_index(drop=True)
 
     def build_unified_dataframe(self):
         doc_to_spans_mapping, doc_to_tokens_mapping, list_of_doc_ids = self.parse()
