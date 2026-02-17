@@ -143,7 +143,7 @@ class MetricsForCategoricalSpansAnonymisation(Metrics):
             row_name="",
         )
 
-    def __call__(self, lenient_level, input_category):
+    def __call__(self, lenient_level=0):
         categorical_metrics = []
         for cat in self.categories:
             self.compute_metrics(lenient_level, input_category=cat)
@@ -154,7 +154,7 @@ class MetricsForCategoricalSpansAnonymisation(Metrics):
             )
         return pd.concat(categorical_metrics)
 
-    def compute_metrics(self, lenient_level: int = 0, input_category: str = None):
+    def compute_metrics(self, lenient_level: int = 0, input_category:str=None):
         """
         Method to compute classification metrics for given category.
         Compute evaluation metrics:

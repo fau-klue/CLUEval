@@ -54,7 +54,7 @@ def main(
     matched_span_recall = span_match_recall(on=["start", "end"])
     matched_span_precision = span_match_precision(on=["start", "end"])
     span_metrics = MetricsForSpansAnonymisation(
-        matched_span_recall, matched_span_precision
+        precision_table=matched_span_precision, recall_table=matched_span_recall
     )(lenient_level=lenient_level, row_name="Span")
 
     list_of_span_evaluation.append(span_metrics)
@@ -93,7 +93,7 @@ def main(
                 matched_span_precision,
                 matched_span_recall,
                 classification_head=categorical_head,
-            )(lenient_level=lenient_level, input_category=categorical_head)
+            )(lenient_level=lenient_level)
             list_of_categorical_evaluations.append(categorical_metrics)
         else:
             for head in categorical_head:
@@ -107,6 +107,6 @@ def main(
         categorical_eval_df = pd.concat(list_of_categorical_evaluations)
         categorical_eval_df["Label"] = categorical_eval_df.index
         categorical_eval_df.reset_index(drop=True, inplace=True)
-        return pd.concat([spans_eval_df, categorical_eval_df])
+        return pd.concat([spans_eval_df, categorical_eval_df]).reset_index(drop=True)
     else:
         return spans_eval_df
