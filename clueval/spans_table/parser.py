@@ -18,10 +18,8 @@ class BioToSentenceParser:
         
     def _generate(self, readfile):
         sent, token_ids = [], []
-        for line in readfile:
-            if ("newdoc id" not in line and
-                "sent_id" not in line
-               ):
+        for i, line in enumerate(readfile):
+            if i != len(readfile) - 1:
                 if line.strip() != "":
                     token = line.split("\t")[0]
                     sent.append(token)
@@ -30,6 +28,9 @@ class BioToSentenceParser:
                 else:
                     yield token_ids, sent
                     token_ids, sent = [], []
+            else:
+                yield token_ids, sent
+                token_ids, sent = [], []
 
 class BioToSpanParser:
     """Convert BIO into spans."""
