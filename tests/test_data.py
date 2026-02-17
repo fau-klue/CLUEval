@@ -60,6 +60,3 @@ def test_match(p1, p2):
     assert recall_match["confidence"][1] == recall_match["confidence_Y"][1]
     # test label for longest overlap span
     assert recall_match["confidence_Y"][1] == "hoch"
-
-
-# TODO: Manual annotation + Precision and Recall
