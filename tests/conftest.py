@@ -4,10 +4,10 @@ import pytest
 @pytest.fixture
 def p1():
     """ annotation 1 """
-    return "tests/data/fiktives-urteil-p1.bio"
+    return "tests/data/reference.bio"
 
 
 @pytest.fixture
 def p2():
     """ annotation 1 """
-    return "tests/data/fiktives-urteil-p2.bio"
+    return "tests/data/candidate.bio"

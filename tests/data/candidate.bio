@@ -1,0 +1,88 @@
+----------	B-niedrig
+AMTSGERICHT	I-niedrig
+ERLANGEN	I-niedrig
+----------	I-niedrig
+
+Mozartstraße	B-hoch
+23	I-hoch
+,	I-hoch
+91052	B-mittel
+Erlangen	I-mittel
+
+HELGA	B-hoch
+SCHMIDT	I-hoch
+,	B-niedrig
+Schillerstraße	B-hoch
+4	B-mittel
+,	O
+91058	B-hoch
+Erlangen	I-hoch
+
+Rechtsanwälte	B-mittel
+Schneider	I-mittel
+&	I-mittel
+Kollegen	I-mittel
+,	O
+Wiener	B-hoch
+Straße	B-hoch
+12	B-mittel
+,	O
+90431	B-hoch
+Nürnberg	I-hoch
+
+Steinbrecher	B-mittel
++	O
+Amberger	B-mittel
+Rechtsanwälte	B-niedrig
+PartGmbB	O
+,	O	O	O
+Gothestraße	B-hoch
+1	I-hoch
+,	O
+91056	B-hoch
+Erlangen	I-hoch
+
+Die	O
+Kläger	O
+sind	O
+Eigentümer	O
+des	O
+Anwesens	B-hoch
+Feldstraße	I-hoch
+5	I-hoch
+a	I-hoch
+,	I-hoch
+91096	I-hoch
+Möhrendorf	I-hoch
+.	O
+
+Am	O
+03.	B-niedrig
+01.	I-niedrig
+2020	I-niedrig
+fand	O
+im	O
+streitgegenständlichen	O
+Haus	O
+ein	O
+Polizeieinsatz	O
+statt	O
+.	O
+
+107	O
+d.	O
+A.	O
+)	O
+des	O
+öffentlich	O
+bestellten	O
+und	O
+vereidigten	O
+Bausachverständigen	B-hoch
+Prof.	I-hoch
+Dr.	O
+Ing.	I-hoch
+Helmut	I-hoch
+Zöller	O
+erhoben	O
+.	O
