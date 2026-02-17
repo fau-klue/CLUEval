@@ -1,5 +1,3 @@
-# tests/test_edge_cases.py
-# Test the 5 classification cases from algorithms.md using DataFrame fixtures
 from clueval.spans_table import Match
 from clueval.evaluation import MetricsForSpansAnonymisation
 import pytest

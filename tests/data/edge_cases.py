@@ -1,5 +1,3 @@
-# tests/data/edge_cases.py
-# DataFrame fixtures for testing the 5 match classes from algorithms.md
 import pytest
 import pandas as pd
 
