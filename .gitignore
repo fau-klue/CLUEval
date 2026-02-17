@@ -20,3 +20,6 @@ venv/
 debug.py
 .idea
 debug/*.tsv
+
+files/
+*.ipynb

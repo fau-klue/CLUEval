@@ -22,6 +22,8 @@ class Metrics(ABC):
     @staticmethod
     def f1(precision, recall):
         """Compute F1. 2*P*R / (P+R)"""
+        if precision + recall == 0:
+            return 0.0
         return round(2 * precision * recall / (precision + recall), 5)
 
 
