@@ -6,9 +6,9 @@ class ErrorTable:
         self.candidate_table = candidate_table
         self.token_position_sentence_mapping = token_position_sentence_mapping
     
-    def __call__(self,  headers:list[str], windows:int=10):
+    def __call__(self,  annotation_layer:str|list[str], windows:int=10):
         overlaps = []
-        intermediate_table = self.match_table[["start", "end", "token_id_start", "token_id_end", "domain", "text", "status"] + headers].copy()
+        intermediate_table = self.match_table[["start", "end", "token_id_start", "token_id_end", "domain", "text", "status"] + [layer for layer in annotation_layer if not layer.endswith("_Y")]].copy()
         # Check for all overlapping spans from candidate table
         for i, row in intermediate_table.iterrows():
             overlap = self.candidate_table[~((row["end"] < self.candidate_table["start"]) | (self.candidate_table["end"] < row["start"]))]
@@ -33,13 +33,13 @@ class ErrorTable:
             joined_overlap_df["token_id_end_Y"] = -100
             joined_overlap_df["text_Y"] = None
 
-        erroneous_table = self.extract_and_highlight_spans(joined_overlap_df, self.token_position_sentence_mapping, windows=windows)
+        erroneous_table = self.extract_and_highlight_spans(joined_overlap_df, self.token_position_sentence_mapping, annotation_layer=annotation_layer, windows=windows)
         erroneous_table = erroneous_table[["token_id_start",
                                               "token_id_end",
                                               "token_id_start_Y",
                                               "token_id_end_Y",
                                               "domain",
-                                               *headers,
+                                               *annotation_layer,
                                                "text",
                                                "text_Y",
                                                "context",
@@ -54,17 +54,64 @@ class ErrorTable:
         return erroneous_table
 
     @staticmethod
-    def extract_and_highlight_spans(input_df:pd.DataFrame, gold_sentence_mapping:dict, windows:int=10):
+    def extract_and_highlight_spans(input_df:pd.DataFrame, gold_sentence_mapping:dict,  annotation_layer: str|list[str], windows:int=10):
+        #TODO: Revise this method: Highlight all candidate spans for each reference span. At the moment, candidate spans are considered separately for the same gold annotation
         # Extract contexts for manual analysis
-        input_df = input_df.copy()
-        for i, row in input_df.iterrows():
-            # span start, end positions
-            ref_start = row["start"]
-            ref_end = row["end"]
 
-            cand_start = row["start_Y"]
-            cand_end = row["end_Y"]
-            text = []
+        input_df = input_df.copy()
+        if isinstance(annotation_layer, str):
+            annotation_layer = [annotation_layer]
+
+        grouped_df = input_df.groupby(["start", "end"])
+        dict_of_erroneous_spans = {"start": [],
+                                   "end": [],
+                                   "token_id_start": [],
+                                   "token_id_end": [],
+                                   "token_id_start_Y": [],
+                                   "token_id_end_Y": [],
+                                   **{layer: [] for layer in annotation_layer},
+                                   "doc_id": [],
+                                   "domain": [],
+                                   "status": [],
+                                   "text": [],
+                                   "text_Y": [],
+                                   "context": []
+                                   }
+
+
+        for group_pos, group in grouped_df:
+            # span start, end positions
+            ref_start = int(group_pos[0])
+            ref_end = int(group_pos[1])
+            cand_token_positions = set([int(entry)  for positions in zip(group["start_Y"].values, group["end_Y"].values) for entry in positions])
+            cand_token_id_start = None if group["token_id_start_Y"].isna().all() else " ".join([str(entry) if entry else "" for entry in group["token_id_start_Y"]])
+            cand_token_id_end = None if group["token_id_end_Y"].isna().all() else " ".join(str(entry) if entry else "" for entry in group["token_id_end_Y"])
+
+
+            reference_text = group["text"].iloc[0].split()
+
+            group["number_overlapping_tokens_with_x"] = group.apply(
+                lambda r: len([token for token in r["text_Y"].split() if token in reference_text]), axis=1)
+
+            # update dict_of_erroneous_spans
+            dict_of_erroneous_spans["start"].append(ref_start)
+            dict_of_erroneous_spans["end"].append(ref_end)
+            dict_of_erroneous_spans["token_id_start"].append(group["token_id_start"].iloc[0])
+            dict_of_erroneous_spans["token_id_end"].append(group["token_id_end"].iloc[0])
+            dict_of_erroneous_spans["token_id_start_Y"].append(cand_token_id_start)
+            dict_of_erroneous_spans["token_id_end_Y"].append(cand_token_id_end)
+            dict_of_erroneous_spans["doc_id"].append(group["doc_id"].iloc[0])
+            dict_of_erroneous_spans["domain"].append(group["domain"].iloc[0])
+            dict_of_erroneous_spans["status"].append(group["status"].iloc[0])
+            dict_of_erroneous_spans["text"].append(" ".join(reference_text))
+            dict_of_erroneous_spans["text_Y"].append(" | ".join([text for text in group["text_Y"].values]))
+
+            context = []
+            for layer in annotation_layer:
+                if layer.endswith("_Y"):
+                    dict_of_erroneous_spans[layer].append(group.loc[group["number_overlapping_tokens_with_x"].idxmax()][layer])
+                else:
+                    dict_of_erroneous_spans[layer].append(group[layer].iloc[0])
 
             for j, token_ids in enumerate(gold_sentence_mapping["token_ids"]):
                 if ref_start in token_ids:
@@ -81,7 +128,7 @@ class ErrorTable:
                     for k in range(left_windows, right_windows):
                         token_id = token_ids[k]
                         token_in_ref = ref_start <= token_id <= ref_end
-                        token_in_cand = cand_start <= token_id <= cand_end
+                        token_in_cand = token_id in cand_token_positions # cand_start <= token_id <= cand_end
                         # Token in both reference and candidate segment
                         if token_in_ref and token_in_cand:
                             token_status[k] = 1
@@ -102,7 +149,7 @@ class ErrorTable:
                         st = trimmed_token_status[si]
                         # Ignore tokens that do not belong to any span
                         if st == 0:
-                            text.append(trimmed_sentence[si])
+                            context.append(trimmed_sentence[si])
                             si += 1
                             continue
                         # Determine the start and end tokens for each span based on token status
@@ -111,17 +158,19 @@ class ErrorTable:
                             sj += 1
                         segment = " ".join(trimmed_sentence[si:sj])
                         if st == 1:
-                            text.append(f"🟩{segment}🟩") # Both ref. and cand
+                            context.append(f"🟩{segment}🟩") # Both ref. and cand
                         elif st == 2:
-                            text.append(f"🟥{segment}🟥") # Ref. only
+                            context.append(f"🟥{segment}🟥") # Ref. only
                         elif st == 3:
-                            text.append(f"🟧{segment}🟧") # Cand. only
+                            context.append(f"🟧{segment}🟧") # Cand. only
                         si = sj
 
-                    text = " ".join(text)
+                    context = " ".join(context)
                     if left_windows != 0:
-                        text = "[...] " + text
+                        context = "[...] " + context
                     if right_windows != len(sentence):
-                        text += " [...]"
-            input_df.loc[i, "context"] = text
-        return input_df
+                        context += " [...]"
+
+            dict_of_erroneous_spans["context"].append(context)
+        highlighted_error_df = pd.DataFrame.from_dict(dict_of_erroneous_spans)
+        return highlighted_error_df
