@@ -4,9 +4,10 @@ warnings.simplefilter(action="ignore", category=FutureWarning) # Suppress pandas
 import pandas as pd
 
 class Match:
-    def __init__(self, x: pd.DataFrame, y: pd.DataFrame):
+    def __init__(self, x: pd.DataFrame, y: pd.DataFrame, annotation_layer:str|list[str]):
         self.x = x
         self.y = y
+        self.annotation_layer = annotation_layer if isinstance(annotation_layer, list) else [annotation_layer]
 
     def __call__(self, on:str|list[str]):
         exact = self.exact_match(self.x, self.y, on=on)
@@ -19,8 +20,8 @@ class Match:
                             f"id_Y",
                             ], inplace=True)
         # Fill Nan values in label columns with "FN"
-        for column in [col for col in match_df.columns if col.startswith("head_")]:
-            match_df.fillna({column: "FN"}, inplace=True)
+        for column in self.annotation_layer:
+            match_df.fillna({column + "_Y": "FN"}, inplace=True)
         match_df.loc[match_df[["start_Y", "end_Y"]].isna().any(axis=1), ["start_Y", "end_Y"]] = -100
         match_df[["start_Y", "end_Y"]] = match_df[["start_Y", "end_Y"]].astype("Int64")
         return match_df.reset_index(drop=True)
@@ -52,12 +53,11 @@ class Match:
         x_rest.loc[x_rest["status"] == "rest", "status"] = "unmatch"
         return x_rest
 
-    @staticmethod
-    def subset(x: pd.DataFrame, y: pd.DataFrame):
+    def subset(self, x: pd.DataFrame, y: pd.DataFrame):
         """ Remaining rows after omitting exact matches:
         y.s1 <= x.s0 & y.e1 >= x.e0
         """
-        y_columns = ["start_Y", "end_Y", "token_id_start_Y", "token_id_end_Y", "text_Y"] + [col + "_Y" for col in x.columns if col.startswith("head_")]
+        y_columns = ["start_Y", "end_Y", "token_id_start_Y", "token_id_end_Y", "text_Y"] + [col + "_Y" for col in self.annotation_layer]
         x[y_columns] = None
         for i, row in x.iterrows():
             superset_y = y[(y["start"] <= row["start"]) & (y["end"] >= row["end"])]
@@ -77,7 +77,7 @@ class Match:
         :return:
         """
         _x = x.copy()
-        y_columns = ["start_Y", "end_Y", "token_id_start_Y", "token_id_end_Y", "text_Y"] + [col + "_Y" for col in _x.columns if col.startswith("head_")]
+        y_columns = ["start_Y", "end_Y", "token_id_start_Y", "token_id_end_Y", "text_Y"] + [col + "_Y" for col in self.annotation_layer]
         for i, row in _x.iterrows():
             if row["status"] == "rest":
                 overlap = y[~((row["end"] < y["start"]) | (y["end"] < row["start"]))]
@@ -92,8 +92,7 @@ class Match:
                         overlap["adjacent"] = 1
                         overlap["number_overlapping_tokens_with_x"] = overlap.apply(lambda r: len([token for token in r["text"].split() if token in row["text"].split()]), axis=1)
                         overlap["id_x"] = row["id"]
-                        headers_column = [column for column in overlap.columns if column.startswith("head_")]
-                        adjacent_overlap = overlap.groupby("adjacent").apply(self.unify_adjacent_spans, headers_column=headers_column)
+                        adjacent_overlap = overlap.groupby("adjacent").apply(self.unify_adjacent_spans, headers_column=self.annotation_layer)
                         _x.at[i, "id_y"] = adjacent_overlap["id"]
                         # Insert spans information from overlap to _x
                         _x.loc[i, y_columns] = adjacent_overlap.loc[:, [column.strip("_Y") for column in y_columns]].iloc[0].values
