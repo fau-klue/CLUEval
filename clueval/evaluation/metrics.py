@@ -143,10 +143,10 @@ class MetricsForCategoricalSpansAnonymisation(Metrics):
             row_name="",
         )
 
-    def __call__(self, **kwargs):
+    def __call__(self, lenient_level, input_category):
         categorical_metrics = []
         for cat in self.categories:
-            self.compute_metrics(input_category=cat, **kwargs)
+            self.compute_metrics(lenient_level, input_category=cat)
             categorical_metrics.append(
                 pd.DataFrame(self.metrics, index=[cat.capitalize()]).drop(
                     columns="row_name"

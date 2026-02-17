@@ -25,9 +25,7 @@ def main(
     if not annotation_layer:
         raise ValueError("No input for annotation_layer")
     if isinstance(annotation_layer, str):
-        tag_name = annotation_layer
-    else:
-        tag_name = annotation_layer[0]
+        annotation_layer = [annotation_layer]
 
     # Convert BIO to spans tables
     reference_converter = Convert(
@@ -49,8 +47,8 @@ def main(
     candidate_df = candidate_converter()
 
     # Evaluation metrics
-    span_match_recall = Match(reference_df, candidate_df)
-    span_match_precision = Match(candidate_df, reference_df)
+    span_match_recall = Match(reference_df, candidate_df, annotation_layer=annotation_layer)
+    span_match_precision = Match(candidate_df, reference_df, annotation_layer=annotation_layer)
 
     # Spans evaluation
     matched_span_recall = span_match_recall(on=["start", "end"])
@@ -68,10 +66,10 @@ def main(
 
         filtered_span_metrics = MetricsForSpansAnonymisation(
             precision_table=matched_span_precision[
-                matched_span_precision["head_" + filter_head + "_Y"] == head_value
+                matched_span_precision[filter_head + "_Y"] == head_value
             ],
             recall_table=matched_span_recall[
-                matched_span_recall["head_" + filter_head] == head_value
+                matched_span_recall[filter_head] == head_value
             ],
         )(lenient_level=lenient_level, row_name=head_value.capitalize())
         list_of_span_evaluation.append(filtered_span_metrics)
@@ -95,7 +93,7 @@ def main(
                 matched_span_precision,
                 matched_span_recall,
                 classification_head=categorical_head,
-            )(lenient_level=lenient_level, row_name=categorical_head)
+            )(lenient_level=lenient_level, input_category=categorical_head)
             list_of_categorical_evaluations.append(categorical_metrics)
         else:
             for head in categorical_head:
