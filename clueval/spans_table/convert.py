@@ -13,14 +13,14 @@ class Convert:
         path_to_file: str,
         annotation_layer: str | list[str],
         token_id_column: int | None = None,
-        domain_column: int | None = None,
         doc_id_column: int | None = None,
+        domain_column: int | None = None,
     ):
         self.path_to_file = path_to_file
         self.annotation_layer = annotation_layer
         self.token_id_column = token_id_column
-        self.domain_column = domain_column
         self.doc_id_column = doc_id_column
+        self.domain_column = domain_column
         self.annotation_layer_mapping = {str(i): layer for i, layer in enumerate(annotation_layer)}
 
     def __call__(self, id_prefix="id", head: int | None = None):
@@ -122,8 +122,8 @@ class Convert:
             tag_column=1,
             n_tag_columns=n_tag_columns,
             token_id_column=self.token_id_column,
-            domain_column=self.domain_column,
             doc_id_column=self.doc_id_column,
+            domain_column=self.domain_column,
             extract_tokens=True,
         )
 
@@ -132,8 +132,8 @@ class Convert:
                 spans_per_layer, _ = parser(
                     tag_column=i + 1,
                     token_id_column=self.token_id_column,
-                    domain_column=self.domain_column,
                     doc_id_column=self.doc_id_column,
+                    domain_column=self.domain_column,
                     extract_tokens=False,
                 )
                 list_of_spans.extend(spans_per_layer)
