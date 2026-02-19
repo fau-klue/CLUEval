@@ -3,7 +3,7 @@ from clueval.spans_table import Convert, Match
 
 def test_converter(p1):
 
-    converter = Convert(p1, annotation_layer=["confidence"])
+    converter = Convert(p1, annotation_layer=["confidence"], token_id_column=2, doc_id_column=3, domain_column=4)
     print(converter)
     df = converter(id_prefix="reference")
    
@@ -31,6 +31,26 @@ def test_converter(p1):
 
     # test last span in reference
     assert df["text"][10] == "Prof. Dr. Ing. Helmut Zöller"
+
+    # test doc_id
+    assert df["doc_id"].notna().all()
+    assert df["doc_id"][0] == "fictitious_1512"
+    assert df["doc_id"][1] == "fictitious_1512"
+
+    # test token_id
+    assert df["token_id_start"].notna().all()
+    assert df["token_id_end"].notna().all()
+
+    assert df["token_id_start"][0] == "token_1"
+    assert df["token_id_end"][0] == "token_2"
+
+    assert df["token_id_start"][10] == "token_74"
+    assert df["token_id_end"][10] == "token_78"
+
+    # test domain
+    assert df["domain"].notna().all()
+    assert len(df["domain"].unique()) == 1
+    assert df["domain"].unique()[0] == "fictitious_domain"
 
 
 def test_match(p1, p2):
