@@ -107,6 +107,5 @@ def main(
         categorical_eval_df = pd.concat(list_of_categorical_evaluations)
         categorical_eval_df["Label"] = categorical_eval_df.index
         categorical_eval_df.reset_index(drop=True, inplace=True)
-        return pd.concat([spans_eval_df, categorical_eval_df]).reset_index(drop=True)
-    else:
-        return spans_eval_df
+        spans_eval_df = pd.concat([spans_eval_df, categorical_eval_df]).reset_index(drop=True)
+    return matched_span_precision, matched_span_recall, spans_eval_df
