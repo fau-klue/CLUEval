@@ -9,6 +9,7 @@ pip install git+https://github.com/fau-klue/CLUEval
 ### Requirements
 - pandas
 - numpy
+- networkx
 
 ## Features
 
