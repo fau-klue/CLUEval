@@ -1,88 +1,88 @@
-----------	O
-AMTSGERICHT	B-niedrig
-ERLANGEN	I-niedrig
-----------	O
+----------	O	token_0	fictitious_1512	Fictitious_Domain
+AMTSGERICHT	B-niedrig	token_1	fictitious_1512	Fictitious_Domain
+ERLANGEN	I-niedrig	token_2	fictitious_1512	Fictitious_Domain
+----------	O	token_3	fictitious_1512	Fictitious_Domain
 
-Mozartstraße	B-hoch
-23	I-hoch
-,	I-hoch
-91052	I-hoch
-Erlangen	I-hoch
+Mozartstraße	B-hoch	token_4	fictitious_1512	Fictitious_Domain
+23	I-hoch	token_5	fictitious_1512	Fictitious_Domain
+,	I-hoch	token_6	fictitious_1512	Fictitious_Domain
+91052	I-hoch	token_7	fictitious_1512	Fictitious_Domain
+Erlangen	I-hoch	token_8	fictitious_1512	Fictitious_Domain
 
-HELGA	B-hoch
-SCHMIDT	I-hoch
-,	O
-Schillerstraße	B-hoch
-4	I-hoch
-,	I-hoch
-91058	I-hoch
-Erlangen	I-hoch
+HELGA	B-hoch	token_9	fictitious_1512	Fictitious_Domain
+SCHMIDT	I-hoch	token_10	fictitious_1512	Fictitious_Domain
+,	O	token_11	fictitious_1512	Fictitious_Domain
+Schillerstraße	B-hoch	token_12	fictitious_1512	Fictitious_Domain
+4	I-hoch	token_13	fictitious_1512	Fictitious_Domain
+,	I-hoch	token_14	fictitious_1512	Fictitious_Domain
+91058	I-hoch	token_15	fictitious_1512	Fictitious_Domain
+Erlangen	I-hoch	token_16	fictitious_1512	Fictitious_Domain
 
-Rechtsanwälte	B-mittel
-Schneider	I-mittel
-&	I-mittel
-Kollegen	I-mittel
-,	O
-Wiener	B-hoch
-Straße	I-hoch
-12	I-hoch
-,	I-hoch
-90431	I-hoch
-Nürnberg	I-hoch
+Rechtsanwälte	B-mittel	token_17	fictitious_1512	Fictitious_Domain
+Schneider	I-mittel	token_18	fictitious_1512	Fictitious_Domain
+&	I-mittel	token_19	fictitious_1512	Fictitious_Domain
+Kollegen	I-mittel	token_20	fictitious_1512	Fictitious_Domain
+,	O	token_21	fictitious_1512	Fictitious_Domain
+Wiener	B-hoch	token_22	fictitious_1512	Fictitious_Domain
+Straße	I-hoch	token_23	fictitious_1512	Fictitious_Domain
+12	I-hoch	token_24	fictitious_1512	Fictitious_Domain
+,	I-hoch	token_25	fictitious_1512	Fictitious_Domain
+90431	I-hoch	token_26	fictitious_1512	Fictitious_Domain
+Nürnberg	I-hoch	token_27	fictitious_1512	Fictitious_Domain
 
-Steinbrecher	B-mittel
-+	I-mittel
-Amberger	I-mittel
-Rechtsanwälte	I-mittel
-PartGmbB	I-mittel
-,	O
-Gothestraße	B-hoch
-1	I-hoch
-,	I-hoch
-91056	I-hoch
-Erlangen	I-hoch
+Steinbrecher	B-mittel	token_28	fictitious_1512	Fictitious_Domain
++	I-mittel	token_29	fictitious_1512	Fictitious_Domain
+Amberger	I-mittel	token_30	fictitious_1512	Fictitious_Domain
+Rechtsanwälte	I-mittel	token_31	fictitious_1512	Fictitious_Domain
+PartGmbB	I-mittel	token_32	fictitious_1512	Fictitious_Domain
+,	O	token_33	fictitious_1512	Fictitious_Domain
+Gothestraße	B-hoch	token_34	fictitious_1512	Fictitious_Domain
+1	I-hoch	token_35	fictitious_1512	Fictitious_Domain
+,	I-hoch	token_36	fictitious_1512	Fictitious_Domain
+91056	I-hoch	token_37	fictitious_1512	Fictitious_Domain
+Erlangen	I-hoch	token_38	fictitious_1512	Fictitious_Domain
 
-Die	O
-Kläger	O
-sind	O
-Eigentümer	O
-des	O
-Anwesens	O
-Feldstraße	B-hoch
-5	I-hoch
-a	I-hoch
-,	I-hoch
-91096	I-hoch
-Möhrendorf	I-hoch
-.	O
+Die	O	token_39	fictitious_1512	Fictitious_Domain
+Kläger	O	token_40	fictitious_1512	Fictitious_Domain
+sind	O	token_41	fictitious_1512	Fictitious_Domain
+Eigentümer	O	token_42	fictitious_1512	Fictitious_Domain
+des	O	token_43	fictitious_1512	Fictitious_Domain
+Anwesens	O	token_44	fictitious_1512	Fictitious_Domain
+Feldstraße	B-hoch	token_45	fictitious_1512	Fictitious_Domain
+5	I-hoch	token_46	fictitious_1512	Fictitious_Domain
+a	I-hoch	token_47	fictitious_1512	Fictitious_Domain
+,	I-hoch	token_48	fictitious_1512	Fictitious_Domain
+91096	I-hoch	token_49	fictitious_1512	Fictitious_Domain
+Möhrendorf	I-hoch	token_50	fictitious_1512	Fictitious_Domain
+.	O	token_51	fictitious_1512	Fictitious_Domain
 
-Am	O
-03.	B-niedrig
-01.	I-niedrig
-2020	I-niedrig
-fand	O
-im	O
-streitgegenständlichen	O
-Haus	O
-ein	O
-Polizeieinsatz	O
-statt	O
-.	O
+Am	O	token_52	fictitious_1512	Fictitious_Domain
+03.	B-niedrig	token_53	fictitious_1512	Fictitious_Domain
+01.	I-niedrig	token_54	fictitious_1512	Fictitious_Domain
+2020	I-niedrig	token_55	fictitious_1512	Fictitious_Domain
+fand	O	token_56	fictitious_1512	Fictitious_Domain
+im	O	token_57	fictitious_1512	Fictitious_Domain
+streitgegenständlichen	O	token_58	fictitious_1512	Fictitious_Domain
+Haus	O	token_59	fictitious_1512	Fictitious_Domain
+ein	O	token_60	fictitious_1512	Fictitious_Domain
+Polizeieinsatz	O	token_61	fictitious_1512	Fictitious_Domain
+statt	O	token_62	fictitious_1512	Fictitious_Domain
+.	O	token_63	fictitious_1512	Fictitious_Domain
 
-107	O
-d.	O
-A.	O
-)	O
-des	O
-öffentlich	O
-bestellten	O
-und	O
-vereidigten	O
-Bausachverständigen	O
-Prof.	B-hoch
-Dr.	I-hoch
-Ing.	I-hoch
-Helmut	I-hoch
-Zöller	I-hoch
-erhoben	O
-.	O
+107	O	token_64	fictitious_1512	Fictitious_Domain
+d.	O	token_65	fictitious_1512	Fictitious_Domain
+A.	O	token_66	fictitious_1512	Fictitious_Domain
+)	O	token_67	fictitious_1512	Fictitious_Domain
+des	O	token_68	fictitious_1512	Fictitious_Domain
+öffentlich	O	token_69	fictitious_1512	Fictitious_Domain
+bestellten	O	token_70	fictitious_1512	Fictitious_Domain
+und	O	token_71	fictitious_1512	Fictitious_Domain
+vereidigten	O	token_72	fictitious_1512	Fictitious_Domain
+Bausachverständigen	O	token_73	fictitious_1512	Fictitious_Domain
+Prof.	B-hoch	token_74	fictitious_1512	Fictitious_Domain
+Dr.	I-hoch	token_75	fictitious_1512	Fictitious_Domain
+Ing.	I-hoch	token_76	fictitious_1512	Fictitious_Domain
+Helmut	I-hoch	token_77	fictitious_1512	Fictitious_Domain
+Zöller	I-hoch	token_78	fictitious_1512	Fictitious_Domain
+erhoben	O	token_79	fictitious_1512	Fictitious_Domain
+.	O	token_80	fictitious_1512	Fictitious_Domain
