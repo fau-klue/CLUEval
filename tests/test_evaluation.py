@@ -15,25 +15,25 @@ def test_evaluate_same_file(p1):
 
 def test_span_evaluation(p1, p2):
     # test exact metrics
-    span_evaluation = main(p1, p2, annotation_layer="confidence")
+    *_, span_evaluation = main(p1, p2, annotation_layer="confidence")
     assert isinstance(span_evaluation, pd.DataFrame) and not span_evaluation.empty
     assert span_evaluation["P"].values.round(4) == 13.6364
     assert span_evaluation["R"].values.round(4) == 27.2727
 
     # test lenient level 1
-    span_evaluation = main(p1, p2, annotation_layer="confidence", lenient_level=1)
+    *_, span_evaluation = main(p1, p2, annotation_layer="confidence", lenient_level=1)
     assert isinstance(span_evaluation, pd.DataFrame)
     assert span_evaluation["P"].values.round(4) == 81.8182
     assert span_evaluation["R"].values.round(4) == 45.4546
 
     # test lenient level 2
-    span_evaluation = main(p1, p2, annotation_layer="confidence", lenient_level=2)
+    *_, span_evaluation = main(p1, p2, annotation_layer="confidence", lenient_level=2)
     assert isinstance(span_evaluation, pd.DataFrame)
     assert span_evaluation["P"].values.round(4) == 81.8182
     assert span_evaluation["R"].values.round(4) == 54.5454
 
     # test lenient level 2
-    span_evaluation = main(p1, p2, annotation_layer="confidence", lenient_level=3)
+    *_, span_evaluation = main(p1, p2, annotation_layer="confidence", lenient_level=3)
     assert isinstance(span_evaluation, pd.DataFrame)
     assert span_evaluation["P"].values.round(4) == 81.8182
     assert span_evaluation["R"].values.round(4) == 54.5454
@@ -46,7 +46,7 @@ def test_span_evaluation(p1, p2):
 
 def test_categorical_evaluation(p1, p2):
     # test exact metrics
-    categorical_evaluation = main(p1, p2, annotation_layer="confidence", categorical_evaluation=True,  categorical_head="confidence")
+    *_, categorical_evaluation = main(p1, p2, annotation_layer="confidence", categorical_evaluation=True,  categorical_head="confidence")
     assert isinstance(categorical_evaluation, pd.DataFrame) and not categorical_evaluation.empty
     assert "Label" in categorical_evaluation.columns.tolist()
     assert categorical_evaluation["Label"].tolist() == ["Span", "Hoch", "Mittel", "Niedrig"]
