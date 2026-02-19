@@ -3,6 +3,7 @@
 import argparse
 
 from clueval.evaluation import main
+from clueval.spans_table import Convert
 from clueval.error_analysis import ErrorTable
 from clueval.spans_table import BioToSentenceParser
 from clueval.version import __version__
@@ -25,7 +26,7 @@ def arguments():
     parser.add_argument("candidate", help="Path to candidate or prediction file.")
     parser.add_argument(
         "-a",
-        "--annotation_layers",
+        "--annotation_layer",
         nargs="+",
         type=str,
         default=None,
@@ -80,23 +81,78 @@ def arguments():
         choices=[0, 1, 2, 3],
         help="Level of lenient evaluation.",
     )
+    parser.add_argument(
+        "-m",
+        "--match_tables",
+        action="store_true",
+        help="Optional argument to print precision and recall matching tables."
+    )
+    parser.add_argument(
+        "-e",
+        "--error_type",
+        nargs="+",
+        type=str,
+        default=None,
+        choices=["subset", "unmatch", "overlap"],
+        help="Filter spans by error types and return error tables."
+    )
     return parser.parse_args()
 
 
 if __name__ == "__main__":
     args = arguments()
 
-    df = main(
+    precision_table, recall_table, eval_table = main(
         args.reference,
         args.candidate,
-        annotation_layer=args.annotation_layers,
-        token_id_column=int(args.token_id_column),
-        domain_column=int(args.domain_column),
-        doc_id_column=int(args.doc_id_column),
+        annotation_layer=args.annotation_layer,
+        token_id_column=int(args.token_id_column) if args.token_id_column else None,
+        domain_column=int(args.domain_column) if args.domain_column else None,
+        doc_id_column=int(args.doc_id_column) if args.doc_id_column else None,
         filter_head=args.filter_head,
         head_value=args.head_value,
         categorical_evaluation=args.categorical_eval,
         categorical_head=args.categorical_head,
         lenient_level=args.lenient_level,
     )
-    print(df)
+
+    if args.error_type:
+        reference = Convert(args.reference,
+                            annotation_layer=args.annotation_layer,
+                            token_id_column=int(args.token_id_column) if args.token_id_column else None,
+                            domain_column=int(args.domain_column) if args.domain_column else None,
+                            doc_id_column=int(args.doc_id_column) if args.doc_id_column else None
+                            )()
+        candidate = Convert(args.candidate,
+                            annotation_layer=args.annotation_layer,
+                            token_id_column=int(args.token_id_column) if args.token_id_column else None,
+                            domain_column=int(args.domain_column) if args.domain_column else None,
+                            doc_id_column=int(args.doc_id_column) if args.doc_id_column else None
+                            )()
+        reference_sents = BioToSentenceParser(args.reference)()
+        candidate_sents = BioToSentenceParser(args.candidate)()
+
+        recall_error_analysis = ErrorTable(recall_table[recall_table["status"].isin(args.error_type)], candidate, reference_sents)
+        recall_erroneous_table = recall_error_analysis(annotation_layer=args.annotation_layer + [layer + "_Y" for layer in args.annotation_layer], windows=10)
+
+        precision_error_analysis = ErrorTable(precision_table[precision_table["status"].isin(args.error_type)], reference, reference_sents)
+        precision_erroneous_table = precision_error_analysis(annotation_layer=args.annotation_layer + [layer + "_Y" for layer in args.annotation_layer], windows=10)
+
+        print("Precision error table:")
+        print(precision_erroneous_table.head())
+        print()
+
+        print("Recall error table:")
+        print(recall_erroneous_table.head())
+        print()
+    if args.match_tables:
+        print("Precision table:")
+        print(precision_table.head())
+        print()
+
+        print("Recall table:")
+        print(recall_table.head())
+        print()
+
+    print("Evaluation results:")
+    print(eval_table)
