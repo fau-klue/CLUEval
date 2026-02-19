@@ -37,9 +37,9 @@ pip install git+https://github.com/fau-klue/CLUEval
   
 ### Table for error analysis
 - CLUEval provides a table for error analysis with colour coded text spans
-  - Green: Tokens occur in both reference and candidate.
-  - Red: Tokens occur in reference but are missing in candidate.
-  - Orange: Tokens appear only in candidate span. 
+  - Green (🟩): Tokens occur in both reference and candidate.
+  - Red (🟥): Tokens occur in reference but are missing in candidate.
+  - Orange (🟧): Tokens appear only in candidate span. 
 - Option to input the window size of context information
 
 ## Usage
@@ -115,13 +115,13 @@ precision_matching = Match(reference, candidate)
 # Show first 5 rows from recall_matching dataframe
 recall_matching.head()
 
-|   start |   end | token_id_start | token_id_end | text                             | doc_id | domain | anon   | entity       | risk    | token_id_start_Y   | token_id_end_Y   | text_Y                           | doc_id_Y   | domain_Y   | anon_Y   | entity_Y     | risk_Y   | status   |   start_Y |   end_Y |
-|--------:|------:|:---------------|:-------------|:---------------------------------|:-------|:-------|:-------|:-------------|:--------|:-------------------|:-----------------|:---------------------------------|:-----------|:-----------|:---------|:-------------|:---------|:---------|----------:|--------:|
-|       2 |     3 |                |              | AMTSGERICHT ERLANGEN             |        |        | anon   | court-name   | niedrig |                    |                  |                                  |            |            |          |              |          | unmatch  |      -100 |    -100 |
-|       7 |     9 |                |              | 11 C 122/20                      |        |        | anon   | court-docket | niedrig |                    |                  | 11 C 122/20                      |            |            | anon     | court-docket | niedrig  | exact    |         7 |       9 |
-|      10 |    14 |                |              | Mozartstraße 23 , 91052 Erlangen |        |        | anon   | address-name | hoch    |                    |                  | Mozartstraße 23 , 91052 Erlangen |            |            | anon     | address-name | hoch     | exact    |        10 |      14 |
-|      17 |    21 |                |              | 09131 / 782 - 01                 |        |        | anon   | code-idx     | niedrig |                    |                  | 09131 / 782 - 01                 |            |            | anon     | code-idx     | niedrig  | exact    |        17 |      21 |
-|      24 |    28 |                |              | 09131 / 782 - 105                |        |        | anon   | code-idx     | niedrig |                    |                  | 09131 / 782 - 105                |            |            | anon     | code-idx     | niedrig  | exact    |        24 |      28 |
+# |   start |   end | token_id_start | token_id_end | text                             | doc_id | domain | anon   | entity       | risk    | token_id_start_Y   | token_id_end_Y   | text_Y                           | doc_id_Y   | domain_Y   | anon_Y   | entity_Y     | risk_Y   | status   |   start_Y |   end_Y |
+# |--------:|------:|:---------------|:-------------|:---------------------------------|:-------|:-------|:-------|:-------------|:--------|:-------------------|:-----------------|:---------------------------------|:-----------|:-----------|:---------|:-------------|:---------|:---------|----------:|--------:|
+# |       2 |     3 |                |              | AMTSGERICHT ERLANGEN             |        |        | anon   | court-name   | niedrig |                    |                  |                                  |            |            |          |              |          | unmatch  |      -100 |    -100 |
+# |       7 |     9 |                |              | 11 C 122/20                      |        |        | anon   | court-docket | niedrig |                    |                  | 11 C 122/20                      |            |            | anon     | court-docket | niedrig  | exact    |         7 |       9 |
+# |      10 |    14 |                |              | Mozartstraße 23 , 91052 Erlangen |        |        | anon   | address-name | hoch    |                    |                  | Mozartstraße 23 , 91052 Erlangen |            |            | anon     | address-name | hoch     | exact    |        10 |      14 |
+# |      17 |    21 |                |              | 09131 / 782 - 01                 |        |        | anon   | code-idx     | niedrig |                    |                  | 09131 / 782 - 01                 |            |            | anon     | code-idx     | niedrig  | exact    |        17 |      21 |
+# |      24 |    28 |                |              | 09131 / 782 - 105                |        |        | anon   | code-idx     | niedrig |                    |                  | 09131 / 782 - 105                |            |            | anon     | code-idx     | niedrig  | exact    |        24 |      28 |
 ```
 
 #### Evaluation
@@ -148,7 +148,7 @@ categorical_metrics(lenient_level=0)
 ```
 
 #### Error Analysis
-You just need to use `ErrorTable` from `error_analysis` to generate a table for error analysis. Additionally, in order to add context information, you need to use `BIOToSentenceParser` from `spans_table` that maps corpus position to corresponding token.
+You just need to use `ErrorTable` from `error_analysis` to generate a table for error assessment. Additionally, in order to retrieve context information, you need to use `BIOToSentenceParser` from `spans_table` that maps corpus position to corresponding token.
 
 ```python
 from clueval.error_analysis import ErrorTable
@@ -163,8 +163,30 @@ error_analysis = ErrorTable(match_table=fn_table, candidate_table=candidate, tok
 erroneous_table = error_analysis(headers=["entity", "risk", "risk_Y"], windows=10)
 erroneous_table.head(1)
 
-| token_id_start   | token_id_end   |   token_id_start_Y |   token_id_end_Y | domain   | entity       | risk    | risk_Y   | reference            | candidate   | context                                                                                                                                | error_type   | comment   |
-|:-----------------|:---------------|-------------------:|-----------------:|:---------|:-------------|:--------|:---------|:---------------------|:------------|:---------------------------------------------------------------------------------------------------------------------------------------|:-------------|:----------|
-| ---              | ---            |               -100 |             -100 | ---      | court-name   | niedrig | ---      | AMTSGERICHT ERLANGEN | ---         | ---------- 🟥AMTSGERICHT ERLANGEN🟥 ----------                                                                                         | unmatch      |           |
+# | token_id_start   | token_id_end   |   token_id_start_Y |   token_id_end_Y | domain   | entity       | risk    | risk_Y   | reference            | candidate   | context                                                                                                                                | error_type   | comment   |
+# |:-----------------|:---------------|-------------------:|-----------------:|:---------|:-------------|:--------|:---------|:---------------------|:------------|:---------------------------------------------------------------------------------------------------------------------------------------|:-------------|:----------|
+# | ---              | ---            |               -100 |             -100 | ---      | court-name   | niedrig | ---      | AMTSGERICHT ERLANGEN | ---         | ---------- 🟥AMTSGERICHT ERLANGEN🟥 ----------                                                                                         | unmatch      |           |
 
+```
+##### Examples
+**Subset**
+```
+Reference: 21. 05. 2020
+Candidate: 21. 05. 2020 und
+Error: subset
+Context: [...] durch Richterin am Amtsgericht Arnold aufgrund der mündlichen Verhandlungen vom 🟩21. 05. 2020🟩 🟧und🟧 25. 06. 2020 folgendes
+```
+
+**Unmatch**
+
+```
+Reference: AMTSGERICHT ERLANGEN
+Candidate: ---
+Error: unmatch
+Context: ---------- 🟥AMTSGERICHT ERLANGEN🟥 ----------
+
+Reference: Feldstraße 4 d , 91096 Möhrendorf
+Candidate: Feldstraße 4 | , 91096 Möhrendorf
+Error: unmatch
+Context: LUISE SCHÜTZ , 🟩Feldstraße 4🟩 🟥d🟥 🟩, 91096 Möhrendorf🟩
 ```
