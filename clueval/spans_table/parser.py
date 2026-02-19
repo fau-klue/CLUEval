@@ -43,8 +43,8 @@ class BioToSpanParser:
         tag_column: int = 1,
         n_tag_columns: int = 1,
         token_id_column: int | None = None,
-        domain_column: int | None = None,
         doc_id_column: int | None = None,
+        domain_column: int | None = None,
         extract_tokens: bool | None = False,
     ):
         spans = []
@@ -61,8 +61,8 @@ class BioToSpanParser:
             for token in self.extract_tokens_from_iob(
                 n_tag_columns=n_tag_columns,
                 token_id_column=token_id_column,
-                domain_column=domain_column,
                 doc_id_column=doc_id_column,
+                domain_column=domain_column,
             ):
                 tokens.append(token)
 
@@ -72,8 +72,8 @@ class BioToSpanParser:
         self,
         n_tag_columns=1,
         token_id_column: int | None = None,
-        domain_column: int | None = None,
         doc_id_column: int | None = None,
+        domain_column: int | None = None,
     ):
         """
         :param n_tag_columns:
@@ -136,8 +136,8 @@ class BioToSpanParser:
         """
         with open(self.path_to_file, "r", encoding="utf-8") as in_f:
             # doc_token_id is the predefined token_id in each document while token_id is the token position in the whole dataset
-            token_id = 0
-            start_id = 0
+            position = 0
+            start_position = 0
             doc_id = None
             current_doc_id = None
             label = None
@@ -145,10 +145,7 @@ class BioToSpanParser:
             lines = in_f.readlines()
             for i, line in enumerate(lines):
                 current_line = line.strip().split("\t")
-
-                if doc_id_column is not None:
-                    doc_id = current_line[doc_id_column]
-
+            
                 # Extract next line if possible
                 try:
                     next_line = lines[i + 1].strip().split("\t")
@@ -157,7 +154,9 @@ class BioToSpanParser:
 
                 # Extract spans based on predicted tags
                 if len(current_line) > 1:
-                    token_id += 1
+                    if doc_id_column is not None:
+                        doc_id = current_line[doc_id_column]
+                    position += 1
                     # Check if doc_id != current_doc_id
                     if doc_id != current_doc_id:
                         current_doc_id = doc_id
@@ -167,7 +166,7 @@ class BioToSpanParser:
                         current_label = re.sub(r"^[BI]-", "", current_tag)
                         if label is None:
                             # Begin of current span
-                            start_id = token_id
+                            start_position = position
                             label = current_label
                         # Extract next label for comparison
                         if len(next_line) > 1:
@@ -182,8 +181,8 @@ class BioToSpanParser:
                             or next_label != label
                         ):
                             yield ParsedSpan(
-                                position_start=start_id,
-                                position_end=token_id,
+                                position_start=start_position,
+                                position_end=position,
                                 doc_id=current_doc_id,
                                 head=tag_column,
                             )
