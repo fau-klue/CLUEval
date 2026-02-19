@@ -3,6 +3,8 @@
 import argparse
 
 from clueval.evaluation import main
+from clueval.error_analysis import ErrorTable
+from clueval.spans_table import BioToSentenceParser
 from clueval.version import __version__
 
 
@@ -37,16 +39,15 @@ def arguments():
         help="Column name for token ids.",
     )
     parser.add_argument(
+        "-i", "--doc_id_column", type=int, default=None, help="Document ID column"
+    )
+    parser.add_argument(
         "-d",
         "--domain_column",
         type=int,
         default=None,
         help="Column ID for domain information.",
     )
-    parser.add_argument(
-        "-i", "--doc_id_column", type=int, default=None, help="Document ID column"
-    )
-
     parser.add_argument(
         "-f",
         "--filter_head",
@@ -89,9 +90,9 @@ if __name__ == "__main__":
         args.reference,
         args.candidate,
         annotation_layer=args.annotation_layers,
-        token_id_column=args.token_id_column,
-        domain_column=args.domain_column,
-        doc_id_column=args.doc_id_column,
+        token_id_column=int(args.token_id_column),
+        domain_column=int(args.domain_column),
+        doc_id_column=int(args.doc_id_column),
         filter_head=args.filter_head,
         head_value=args.head_value,
         categorical_evaluation=args.categorical_eval,
@@ -99,4 +100,3 @@ if __name__ == "__main__":
         lenient_level=args.lenient_level,
     )
     print(df)
-    # print(df.to_csv(sep="\t"))
