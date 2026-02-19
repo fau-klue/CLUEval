@@ -45,6 +45,25 @@ pip install git+https://github.com/fau-klue/CLUEval
 ## Usage
 CLUEval expects input data in vertical format (VRT) with BIO tagging scheme.
 
+```python
+# fiktives-urteil-p1.bio
+# 
+# ----------	O	O	O
+# AMTSGERICHT	B-anon	B-court-name	B-niedrig
+# ERLANGEN	I-anon	I-court-name	I-niedrig
+# ----------	O	O	O
+```
+Further meta information can be included in the VRT file, such as predefined token IDs, document IDs and text domains. 
+
+```python
+# reference.bio
+# 
+# ----------	O	token_0	fictitious_1512	Fictitious_Domain
+# AMTSGERICHT	B-niedrig	token_1	fictitious_1512	Fictitious_Domain
+# ERLANGEN	I-niedrig	token_2	fictitious_1512	Fictitious_Domain
+# ----------	O	token_3	fictitious_1512	Fictitious_Domain
+```
+
 ### cluevaluate executable script
 ```sh
 positional arguments:
@@ -58,10 +77,10 @@ options:
                         Input names for annotation layers. (default: None)
   -t TOKEN_ID_COLUMN, --token_id_column TOKEN_ID_COLUMN
                         Column name for token ids. (default: None)
-  -d DOMAIN_COLUMN, --domain_column DOMAIN_COLUMN
-                        Column ID for domain information. (default: None)
   -i DOC_ID_COLUMN, --doc_id_column DOC_ID_COLUMN
                         Document ID column (default: None)
+  -d DOMAIN_COLUMN, --domain_column DOMAIN_COLUMN
+                        Column ID for domain information. (default: None)
   -f FILTER_HEAD, --filter_head FILTER_HEAD
                         Column name for filtering. (default: None)
   -hv HEAD_VALUE, --head_value HEAD_VALUE
@@ -96,7 +115,7 @@ You will need to import:
 - `Convert` and `Match` from `spans_table` 
 - `MetricsForSpanAnonymisation` as well as `MetricsForCategoricalSpanAnonymisation` from `evaluation`
 
-#### Create span dataframe for reference and prediction files
+#### Convert and match reference and prediction files to span dataframe
 ```python
 from clueval.spans_table import Convert, Match
 
@@ -110,7 +129,39 @@ candidate = cand_converter()
 recall_matching = Match(reference, candidate)
 precision_matching = Match(reference, candidate)
 ```
-#### Output dataframe
+
+#### Further span meta information
+```python
+from clueval.spans_table import Convert
+
+ref_converter = Convert(path_to_file="./tests/data/reference.bio", 
+                        annotation_layer=["confidence"],
+                        token_id_column=2,
+                        doc_id_column=3,
+                        domain_column=4)
+reference = ref_converter()
+reference.head()
+
+# |   start |   end | token_id_start   | token_id_end   | text                               | doc_id          | domain            | confidence   | id       |
+# |--------:|------:|:-----------------|:---------------|:-----------------------------------|:----------------|:------------------|:-------------|:---------|
+# |       2 |     3 | token_1          | token_2        | AMTSGERICHT ERLANGEN               | fictitious_1512 | fictitious_domain | niedrig      | id000001 |
+# |       5 |     9 | token_4          | token_8        | Mozartstraße 23 , 91052 Erlangen   | fictitious_1512 | fictitious_domain | hoch         | id000002 |
+# |      10 |    11 | token_9          | token_10       | HELGA SCHMIDT                      | fictitious_1512 | fictitious_domain | hoch         | id000003 |
+# |      13 |    17 | token_12         | token_16       | Schillerstraße 4 , 91058 Erlangen  | fictitious_1512 | fictitious_domain | hoch         | id000004 |
+# |      18 |    21 | token_17         | token_20       | Rechtsanwälte Schneider & Kollegen | fictitious_1512 | fictitious_domain | mittel       | id000005 |
+```
+##### Columns in Convert dataframe
+`start`: Span start position in corpus <br>
+`end`: Span end position in corpus <br>
+`token_id_start` : Predefined token ID for span start token in corpus<br>
+`token_id_end`: Predefined token ID for span end token in corpus<br>
+`text`: Extracted text span <br>
+`doc_id`: Document Id<br>
+`domain`: Text domain <br>
+`id`: Span id <br>
+input `annotation layers`: Tag columns (here: confidence)
+
+#### Match dataframe
 ```python
 # Show first 5 rows from recall_matching dataframe
 recall_matching.head()
@@ -123,6 +174,25 @@ recall_matching.head()
 # |      17 |    21 |                |              | 09131 / 782 - 01                 |        |        | anon   | code-idx     | niedrig |                    |                  | 09131 / 782 - 01                 |            |            | anon     | code-idx     | niedrig  | exact    |        17 |      21 |
 # |      24 |    28 |                |              | 09131 / 782 - 105                |        |        | anon   | code-idx     | niedrig |                    |                  | 09131 / 782 - 105                |            |            | anon     | code-idx     | niedrig  | exact    |        24 |      28 |
 ```
+##### Columns in Match dataframe
+`start`: Span start position in reference corpus <br>
+`end`: Span end position in reference corpus <br>
+`token_id_start` : Predefined token ID for span start token in reference corpus<br>
+`token_id_end`: Predefined token ID for span end token in reference corpus<br>
+`text`: Extracted text span <br>
+`doc_id`: Document Id<br>
+`domain`: Text domain <br>
+`start_Y`:Span start position in candidate corpus <br>
+`end_Y`: Span end position in candidate corpus <br>
+`token_id_start_Y`: Predefined token ID for span start token in candidate corpus<br>
+`token_id_end_Y`: Predefined token ID for span end token in candiate corpus<br>
+`text_Y`: Candidate text span<br>
+`doc_id_Y`: Document Id in candidate (should be the same as reference) <br>
+`domain_Y`: Text domain <br>
+`status`: Matching types between reference and candidate <br>
+and <br>
+input `annotation layers`: Tag columns (here: anon, entity, risk)
+
 
 #### Evaluation
 
@@ -168,7 +238,20 @@ erroneous_table.head(1)
 # | ---              | ---            |               -100 |             -100 | ---      | court-name   | niedrig | ---      | AMTSGERICHT ERLANGEN | ---         | ---------- 🟥AMTSGERICHT ERLANGEN🟥 ----------                                                                                         | unmatch      |           |
 
 ```
-##### Examples
+##### Columns
+`token_id_start` : Predefined token ID for span start token in reference corpus<br>
+`token_id_end`: Predefined token ID for span end token in reference corpus<br>
+`token_id_start_Y`: Predefined token ID for span start token in candidate corpus<br>
+`token_id_end_Y`: Predefined token ID for span end token in candiate corpus<br>
+`domain`: Text domain <br>
+`reference`: Reference span <br>
+`candidate`: Candidate text span <br>
+`context`: Highlighted spans + context tokens <br>
+`error_type`: Types of matching error <br>
+and <br>
+input `annotation layers`: Tag columns (here: entity and risk)
+
+##### Examples for possible cases
 **Subset**
 ```
 Reference: 21. 05. 2020
