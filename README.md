@@ -113,6 +113,14 @@ cluevaluate <REFERENCE> <PREDICTION> -a ner_tags pos_tags -f ner_tags -hv PERSON
 ```sh
 cluevaluate <REFERENCE> <PREDICTION> -a ner_tags pos_tags -c -ch pos_tags
 ```
+#### Include Precision and Recall tables
+```sh
+cluevaluate <REFERENCE> <PREDICTION> -a ner_tags pos_tags -m
+```
+#### Include error tables
+```sh
+cluevaluate <REFERENCE> <PREDICTION> -a ner_tags pos_tags -e unmatch subset
+```
 ### Module
 Instead of using the provided executable script, you can also embed the CLUEval module into your evaluation script / notebook. 
 You will need to import:
