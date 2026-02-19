@@ -25,13 +25,14 @@ class ErrorTable:
                                                          right_on=["start_X", "end_X"], suffixes=("", "_Y"))
             joined_overlap_df.loc[joined_overlap_df[["start_Y", "end_Y"]].isna().any(axis=1), ["start_Y", "end_Y"]] = -100
             joined_overlap_df[["start_Y", "end_Y"]] = joined_overlap_df[["start_Y", "end_Y"]].astype("Int64")
+            joined_overlap_df["text_Y"].fillna("", inplace=True)
         except ValueError:
             joined_overlap_df = intermediate_table
             joined_overlap_df["start_Y"] = -100
             joined_overlap_df["end_Y"] = -100
             joined_overlap_df["token_id_start_Y"] = -100
             joined_overlap_df["token_id_end_Y"] = -100
-            joined_overlap_df["text_Y"] = None
+            joined_overlap_df["text_Y"] = ""
 
         erroneous_table = self.extract_and_highlight_spans(joined_overlap_df, self.token_position_sentence_mapping, annotation_layer=annotation_layer, windows=windows)
         erroneous_table = erroneous_table[["token_id_start",
@@ -51,6 +52,7 @@ class ErrorTable:
                                                                                         }
                                 ).sort_values(by=["error_type","token_id_start"]).reset_index(drop=True)
 
+        erroneous_table.loc[erroneous_table["candidate"] == "", "candidate"] = "---"
         return erroneous_table
 
     @staticmethod
@@ -83,7 +85,7 @@ class ErrorTable:
             # span start, end positions
             ref_start = int(group_pos[0])
             ref_end = int(group_pos[1])
-            cand_token_positions = set([int(entry)  for positions in zip(group["start_Y"].values, group["end_Y"].values) for entry in positions])
+            cand_token_positions = [i for positions in zip(group["start_Y"].values, group["end_Y"].values) for i in range(positions[0], positions[1]+1)]
             cand_token_id_start = None if group["token_id_start_Y"].isna().all() else " ".join([str(entry) if entry else "" for entry in group["token_id_start_Y"]])
             cand_token_id_end = None if group["token_id_end_Y"].isna().all() else " ".join(str(entry) if entry else "" for entry in group["token_id_end_Y"])
 
@@ -91,7 +93,7 @@ class ErrorTable:
             reference_text = group["text"].iloc[0].split()
 
             group["number_overlapping_tokens_with_x"] = group.apply(
-                lambda r: len([token for token in r["text_Y"].split() if token in reference_text]), axis=1)
+                lambda r: 0 if pd.isna(r["text_Y"]) else len([token for token in r["text_Y"].split() if token in reference_text]), axis=1)
 
             # update dict_of_erroneous_spans
             dict_of_erroneous_spans["start"].append(ref_start)
@@ -119,6 +121,8 @@ class ErrorTable:
                     left_windows = max(0, token_ids.index(ref_start) - windows)
                     right_windows = min(len(sentence), token_ids.index(ref_end) + windows)
 
+                    if "Züricher" in sentence:
+                        print()
                     # Assign token status according to corpus position:
                     # 0: Token does not belong to any span
                     # 1: Token contained in both ref. and candidate spans
@@ -128,7 +132,7 @@ class ErrorTable:
                     for k in range(left_windows, right_windows):
                         token_id = token_ids[k]
                         token_in_ref = ref_start <= token_id <= ref_end
-                        token_in_cand = token_id in cand_token_positions # cand_start <= token_id <= cand_end
+                        token_in_cand = token_id in cand_token_positions
                         # Token in both reference and candidate segment
                         if token_in_ref and token_in_cand:
                             token_status[k] = 1
