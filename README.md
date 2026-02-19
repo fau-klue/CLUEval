@@ -66,7 +66,7 @@ Further meta information can be included in the VRT file, such as predefined tok
 ```
 
 ### cluevaluate executable script
-```sh
+```
 positional arguments:
   reference             Path to reference file.
   candidate             Path to candidate or prediction file.
@@ -74,7 +74,7 @@ positional arguments:
 options:
   -h, --help            show this help message and exit
   -v, --version         output version information and exit
-  -a ANNOTATION_LAYERS [ANNOTATION_LAYERS ...], --annotation_layers ANNOTATION_LAYERS [ANNOTATION_LAYERS ...]
+  -a ANNOTATION_LAYER [ANNOTATION_LAYER ...], --annotation_layer ANNOTATION_LAYER [ANNOTATION_LAYER ...]
                         Input names for annotation layers. (default: None)
   -t TOKEN_ID_COLUMN, --token_id_column TOKEN_ID_COLUMN
                         Column name for token ids. (default: None)
@@ -92,6 +92,9 @@ options:
                         Column name for categorical values. (default: None)
   -l {0,1,2,3}, --lenient_level {0,1,2,3}
                         Level of lenient evaluation. (default: 0)
+  -m, --match_tables    Optional argument to print precision and recall matching tables. (default: False)
+  -e {subset,unmatch,overlap} [{subset,unmatch,overlap} ...], --error_type {subset,unmatch,overlap} [{subset,unmatch,overlap} ...]
+                        Filter spans by error types and return error tables. (default: None)
 ```
 #### Examples
 #### Single layer evaluation
