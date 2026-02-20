@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 
+import os
 import argparse
 
 from clueval.evaluation import main
@@ -33,45 +34,34 @@ def arguments():
         help="Input names for annotation layers.",
     )
     parser.add_argument(
-        "-t",
-        "--token_id_column",
-        type=str,
-        default=None,
-        help="Column name for token ids.",
-    )
-    parser.add_argument(
-        "-i", "--doc_id_column", type=int, default=None, help="Document ID column"
-    )
-    parser.add_argument(
-        "-d",
+        "-cd",
         "--domain_column",
         type=int,
         default=None,
-        help="Column ID for domain information.",
+        help="Column index of domain information.",
     )
     parser.add_argument(
-        "-f",
-        "--filter_head",
+        "-ci",
+        "--doc_id_column",
+        type=int,
+        default=None,
+        help="Column index of document ID"
+    )
+    parser.add_argument(
+        "-ct",
+        "--token_id_column",
         type=str,
         default=None,
-        help="Column name for filtering.",
+        help="Column index of token ids.",
     )
     parser.add_argument(
-        "-hv", "--head_value", type=str, default=None, help="Filter column by value."
-    )
-    parser.add_argument(
-        "-c",
-        "--categorical_eval",
-        action="store_true",
-        help="Compute metrics for each category.",
-    )
-    parser.add_argument(
-        "-ch",
-        "--categorical_head",
-        nargs="+",
+        "-e",
+        "--error_type",
+        nargs="*",
         type=str,
         default=None,
-        help="Column name for categorical values.",
+        choices=["subset", "unmatch", "overlap"],
+        help="Filter spans by error types and return error tables. Default choice is 'unmatch' when this option is passed without any further arguments."
     )
     parser.add_argument(
         "-l",
@@ -82,19 +72,51 @@ def arguments():
         help="Level of lenient evaluation.",
     )
     parser.add_argument(
+        "-le",
+        "--label_evaluation",
+        action="store_true",
+        help="Compute metrics for each category.",
+    )
+    parser.add_argument(
+        "-lc",
+        "--label_column",
+        nargs="+",
+        type=str,
+        default=None,
+        help="Column name for label values.",
+    )
+    parser.add_argument(
         "-m",
         "--match_tables",
         action="store_true",
         help="Optional argument to print precision and recall matching tables."
     )
     parser.add_argument(
-        "-e",
-        "--error_type",
-        nargs="+",
+        "-n",
+        "--n_row",
+        default=5,
+        type=int,
+        help="Number of rows to print."
+    )
+    parser.add_argument(
+        "-sl",
+        "--span_label_column",
         type=str,
         default=None,
-        choices=["subset", "unmatch", "overlap"],
-        help="Filter spans by error types and return error tables."
+        help="Label column for span-label evaluation.",
+    )
+    parser.add_argument(
+        "-slv",
+        "--span_label_value",
+        type=str,
+        default=None,
+        help="Value to filter label column."
+    )
+    parser.add_argument(
+        "-w",
+        "--write_to_file",
+        action="store_true",
+        help="Argument to write tables to files."
     )
     return parser.parse_args()
 
@@ -102,6 +124,7 @@ def arguments():
 if __name__ == "__main__":
     args = arguments()
 
+    tables = {}
     precision_table, recall_table, eval_table = main(
         args.reference,
         args.candidate,
@@ -109,14 +132,20 @@ if __name__ == "__main__":
         token_id_column=int(args.token_id_column) if args.token_id_column else None,
         domain_column=int(args.domain_column) if args.domain_column else None,
         doc_id_column=int(args.doc_id_column) if args.doc_id_column else None,
-        filter_head=args.filter_head,
-        head_value=args.head_value,
-        categorical_evaluation=args.categorical_eval,
-        categorical_head=args.categorical_head,
+        filter_head=args.span_label_column,
+        head_value=args.span_label_value,
+        categorical_evaluation=args.label_evaluation,
+        categorical_head=args.label_column,
         lenient_level=args.lenient_level,
     )
+    tables.update({"precision_table": precision_table,
+                   "recall_table": recall_table,
+                   "evaluation_table": eval_table})
 
-    if args.error_type:
+    # set 'unmatch' as default value when the argument error_type is passed
+    if args.error_type is not None:
+        if len(args.error_type) == 0:
+            args.error_type = ["unmatch"]
         reference = Convert(args.reference,
                             annotation_layer=args.annotation_layer,
                             token_id_column=int(args.token_id_column) if args.token_id_column else None,
@@ -138,21 +167,29 @@ if __name__ == "__main__":
         precision_error_analysis = ErrorTable(precision_table[precision_table["status"].isin(args.error_type)], reference, reference_sents)
         precision_erroneous_table = precision_error_analysis(annotation_layer=args.annotation_layer + [layer + "_Y" for layer in args.annotation_layer], windows=10)
 
+        tables.update({"precision_error_table": precision_erroneous_table,
+                      "recall_error_table": recall_erroneous_table
+                      })
         print("Precision error table:")
-        print(precision_erroneous_table.head())
+        print(precision_erroneous_table.head(args.n_row))
         print()
 
         print("Recall error table:")
-        print(recall_erroneous_table.head())
+        print(recall_erroneous_table.head(args.n_row))
         print()
     if args.match_tables:
         print("Precision table:")
-        print(precision_table.head())
+        print(precision_table.head(args.n_row))
         print()
 
         print("Recall table:")
-        print(recall_table.head())
+        print(recall_table.head(args.n_row))
         print()
 
     print("Evaluation results:")
     print(eval_table)
+
+    if args.write_to_file:
+        os.makedirs("./tables/",exist_ok=True)
+        for name, df in tables.items():
+            df.to_csv(f"./tables/{name}.tsv", sep="\t", index=False)
