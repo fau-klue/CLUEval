@@ -76,25 +76,31 @@ options:
   -v, --version         output version information and exit
   -a ANNOTATION_LAYER [ANNOTATION_LAYER ...], --annotation_layer ANNOTATION_LAYER [ANNOTATION_LAYER ...]
                         Input names for annotation layers. (default: None)
-  -t TOKEN_ID_COLUMN, --token_id_column TOKEN_ID_COLUMN
-                        Column name for token ids. (default: None)
-  -i DOC_ID_COLUMN, --doc_id_column DOC_ID_COLUMN
-                        Document ID column (default: None)
-  -d DOMAIN_COLUMN, --domain_column DOMAIN_COLUMN
-                        Column ID for domain information. (default: None)
-  -f FILTER_HEAD, --filter_head FILTER_HEAD
-                        Column name for filtering. (default: None)
-  -hv HEAD_VALUE, --head_value HEAD_VALUE
-                        Filter column by value. (default: None)
-  -c, --categorical_eval
-                        Compute metrics for each category. (default: False)
-  -ch CATEGORICAL_HEAD [CATEGORICAL_HEAD ...], --categorical_head CATEGORICAL_HEAD [CATEGORICAL_HEAD ...]
-                        Column name for categorical values. (default: None)
+  -cd DOMAIN_COLUMN, --domain_column DOMAIN_COLUMN
+                        Column index of domain information. (default: None)
+  -ci DOC_ID_COLUMN, --doc_id_column DOC_ID_COLUMN
+                        Column index of document ID (default: None)
+  -ct TOKEN_ID_COLUMN, --token_id_column TOKEN_ID_COLUMN
+                        Column index of token ids. (default: None)
+  -e [{subset,unmatch,overlap} ...], --error_type [{subset,unmatch,overlap} ...]
+                        Filter spans by error types and return error tables. 
+                        Default setting is 'unmatch' when the option is passed without any addiitonal parameters. 
+                        (default: None)
   -l {0,1,2,3}, --lenient_level {0,1,2,3}
                         Level of lenient evaluation. (default: 0)
+  -le, --label_evaluation
+                        Compute metrics for each category. (default: False)
+  -lc LABEL_COLUMN [LABEL_COLUMN ...], --label_column LABEL_COLUMN [LABEL_COLUMN ...]
+                        Column name for label values. (default: None)
   -m, --match_tables    Optional argument to print precision and recall matching tables. (default: False)
-  -e {subset,unmatch,overlap} [{subset,unmatch,overlap} ...], --error_type {subset,unmatch,overlap} [{subset,unmatch,overlap} ...]
-                        Filter spans by error types and return error tables. (default: None)
+  -n N_ROW, --n_row N_ROW
+                        Number of rows to print. (default: 5)
+  -sl SPAN_LABEL_COLUMN, --span_label_column SPAN_LABEL_COLUMN
+                        Label column for span-label evaluation. (default: None)
+  -slv SPAN_LABEL_VALUE, --span_label_value SPAN_LABEL_VALUE
+                        Value to filter label column. (default: None)
+  -w, --write_to_file   Argument to write tables to files. (default: False)
+
 ```
 #### Examples
 #### Single layer evaluation
@@ -105,19 +111,20 @@ cluevaluate <REFERENCE> <PREDICTION> -a ner_tags
 ```sh
 cluevaluate <REFERENCE> <PREDICTION> -a ner_tags pos_tags
 ```
-#### Conditional evaluation
+#### Span evaluation filtered by label column
 ```sh
-cluevaluate <REFERENCE> <PREDICTION> -a ner_tags pos_tags -f ner_tags -hv PERSON
+cluevaluate <REFERENCE> <PREDICTION> -a ner_tags pos_tags -sl ner_tags -slv PERSON
 ```
-#### Include categorical evaluation
+#### Include categorical label evaluation
 ```sh
-cluevaluate <REFERENCE> <PREDICTION> -a ner_tags pos_tags -c -ch pos_tags
+cluevaluate <REFERENCE> <PREDICTION> -a ner_tags pos_tags -le -lc pos_tags
 ```
 #### Include Precision and Recall tables
 ```sh
 cluevaluate <REFERENCE> <PREDICTION> -a ner_tags pos_tags -m
 ```
 #### Include error tables
+NB: 'unmatch' is the default setting when the `-e` argument is passed without any additional parameters.
 ```sh
 cluevaluate <REFERENCE> <PREDICTION> -a ner_tags pos_tags -e unmatch subset
 ```
@@ -178,13 +185,13 @@ input `annotation layers`: Tag columns (here: confidence)
 # Show first 5 rows from recall_matching dataframe
 recall_matching.head()
 
-# |   start |   end | token_id_start | token_id_end | text                             | doc_id | domain | anon   | entity       | risk    | token_id_start_Y   | token_id_end_Y   | text_Y                           | doc_id_Y   | domain_Y   | anon_Y   | entity_Y     | risk_Y   | status   |   start_Y |   end_Y |
-# |--------:|------:|:---------------|:-------------|:---------------------------------|:-------|:-------|:-------|:-------------|:--------|:-------------------|:-----------------|:---------------------------------|:-----------|:-----------|:---------|:-------------|:---------|:---------|----------:|--------:|
-# |       2 |     3 |                |              | AMTSGERICHT ERLANGEN             |        |        | anon   | court-name   | niedrig |                    |                  |                                  |            |            |          |              |          | unmatch  |      -100 |    -100 |
-# |       7 |     9 |                |              | 11 C 122/20                      |        |        | anon   | court-docket | niedrig |                    |                  | 11 C 122/20                      |            |            | anon     | court-docket | niedrig  | exact    |         7 |       9 |
-# |      10 |    14 |                |              | Mozartstraße 23 , 91052 Erlangen |        |        | anon   | address-name | hoch    |                    |                  | Mozartstraße 23 , 91052 Erlangen |            |            | anon     | address-name | hoch     | exact    |        10 |      14 |
-# |      17 |    21 |                |              | 09131 / 782 - 01                 |        |        | anon   | code-idx     | niedrig |                    |                  | 09131 / 782 - 01                 |            |            | anon     | code-idx     | niedrig  | exact    |        17 |      21 |
-# |      24 |    28 |                |              | 09131 / 782 - 105                |        |        | anon   | code-idx     | niedrig |                    |                  | 09131 / 782 - 105                |            |            | anon     | code-idx     | niedrig  | exact    |        24 |      28 |
+# |   start |   end | token_id_start | token_id_end | text                             | doc_id | domain | anon   | entity       | risk    | token_id_start_Y   | token_id_end_Y   | text_Y                           |  anon_Y  | entity_Y     | risk_Y   | status   |   start_Y |   end_Y |
+# |--------:|------:|:---------------|:-------------|:---------------------------------|:-------|:-------|:-------|:-------------|:--------|:-------------------|:-----------------|:---------------------------------|:---------|:-------------|:---------|:---------|:----------|:--------|
+# |       2 |     3 |                |              | AMTSGERICHT ERLANGEN             |        |        | anon   | court-name   | niedrig |                    |                  |                                  |          |              |          | unmatch  |      -100 |    -100 |
+# |       7 |     9 |                |              | 11 C 122/20                      |        |        | anon   | court-docket | niedrig |                    |                  | 11 C 122/20                      | anon     | court-docket | niedrig  | exact    |         7 |       9 |
+# |      10 |    14 |                |              | Mozartstraße 23 , 91052 Erlangen |        |        | anon   | address-name | hoch    |                    |                  | Mozartstraße 23 , 91052 Erlangen | anon     | address-name | hoch     | exact    |        10 |      14 |
+# |      17 |    21 |                |              | 09131 / 782 - 01                 |        |        | anon   | code-idx     | niedrig |                    |                  | 09131 / 782 - 01                 | anon     | code-idx     | niedrig  | exact    |        17 |      21 |
+# |      24 |    28 |                |              | 09131 / 782 - 105                |        |        | anon   | code-idx     | niedrig |                    |                  | 09131 / 782 - 105                | anon     | code-idx     | niedrig  | exact    |        24 |      28 |
 ```
 ##### Columns in Match dataframe
 `start`: Span start position in reference corpus <br>
@@ -199,8 +206,6 @@ recall_matching.head()
 `token_id_start_Y`: Predefined token ID for span start token in candidate corpus<br>
 `token_id_end_Y`: Predefined token ID for span end token in candiate corpus<br>
 `text_Y`: Candidate text span<br>
-`doc_id_Y`: Document Id in candidate (should be the same as reference) <br>
-`domain_Y`: Text domain <br>
 `status`: Matching types between reference and candidate <br>
 and <br>
 input `annotation layers`: Tag columns (here: anon, entity, risk)
