@@ -61,7 +61,7 @@ n spans in candidate:
 #### Precision
 - Hoch
   - exact: TP - 1 FN - 11
-  - lenient 1: TP - 10 FN 2   
+  - lenient 1: TP - 10 FN 2
   - lenient 2: TP - 10 FN 2
   - lenient 3: TP -10 FN 2
 

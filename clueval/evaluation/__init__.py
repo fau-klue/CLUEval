@@ -7,6 +7,7 @@ from .metrics import (
 )
 import pandas as pd
 
+
 def main(
     path_reference: str,
     path_candidate: str,

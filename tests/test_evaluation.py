@@ -1,17 +1,20 @@
 import pandas as pd
 from clueval.evaluation import main
 
+
 def test_evaluate(p1, p2):
     main(p1, p2, annotation_layer="confidence")
     main(p1, p2, annotation_layer="confidence")
     main(p1, p2, annotation_layer="confidence")
     main(p1, p2, annotation_layer="confidence", categorical_evaluation=True, categorical_head="confidence")
 
+
 def test_evaluate_same_file(p1):
     main(p1, p1, annotation_layer="confidence")
     main(p1, p1, annotation_layer="confidence")
     main(p1, p1, annotation_layer="confidence")
     main(p1, p1, annotation_layer="confidence", categorical_evaluation=True, categorical_head="confidence")
+
 
 def test_span_evaluation(p1, p2):
     # test exact metrics
@@ -44,6 +47,36 @@ def test_span_evaluation(p1, p2):
     # test recall TP for lenient level 3
     assert span_evaluation["TP_Recall"].values[0] == 6
 
+
+def test_span_evaluation_short(p1s, p2s):
+    # test exact metrics
+    *_, span_evaluation = main(p1s, p2s, annotation_layer="confidence")
+    assert isinstance(span_evaluation, pd.DataFrame) and not span_evaluation.empty
+    assert span_evaluation["P"].values.round(4) == round(2/19 * 100, 4)
+    assert span_evaluation["R"].values.round(4) == round(2/9 * 100, 4)
+
+    # test lenient level 1
+    *_, span_evaluation = main(p1s, p2s, annotation_layer="confidence", lenient_level=1)
+    assert isinstance(span_evaluation, pd.DataFrame)
+    assert span_evaluation["P"].values.round(4) == round(15/19 * 100, 4)
+    assert span_evaluation["R"].values.round(4) == round(4/9 * 100, 4)
+
+    # test lenient level 2
+    *_, span_evaluation = main(p1s, p2s, annotation_layer="confidence", lenient_level=2)
+    assert isinstance(span_evaluation, pd.DataFrame)
+    assert span_evaluation["P"].values.round(4) == round(15/19 * 100, 4)
+    assert span_evaluation["R"].values.round(4) == round(5/9 * 100, 4)
+
+    # test lenient level 2
+    *_, span_evaluation = main(p1s, p2s, annotation_layer="confidence", lenient_level=3)
+    assert isinstance(span_evaluation, pd.DataFrame)
+    assert span_evaluation["P"].values.round(4) == round(15/19 * 100, 4)
+    assert span_evaluation["R"].values.round(4) == round(6/9 * 100, 4)
+
+    # test span support
+    assert span_evaluation["Support"].values[0] == 9
+
+
 def test_categorical_evaluation(p1, p2):
     # test exact metrics
     *_, categorical_evaluation = main(p1, p2, annotation_layer="confidence", categorical_evaluation=True,  categorical_head="confidence")
@@ -53,7 +86,7 @@ def test_categorical_evaluation(p1, p2):
     # Support
     assert categorical_evaluation[categorical_evaluation["Label"] == "Hoch"]["Support"].values == 7
     assert categorical_evaluation[categorical_evaluation["Label"] == "Mittel"]["Support"].values == 2
-    assert categorical_evaluation[categorical_evaluation["Label"] == "Niedrig"]["Support"].values  == 2
+    assert categorical_evaluation[categorical_evaluation["Label"] == "Niedrig"]["Support"].values == 2
 
     # test number of TP_Recall / FN
     assert categorical_evaluation[categorical_evaluation["Label"] == "Hoch"]["TP_Recall"].values == 1

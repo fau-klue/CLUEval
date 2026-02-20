@@ -1,41 +1,76 @@
 # CLUEval
 
-CLUEval is a simple Python module for evaluating text anonymisation using token classification. It provides common metrics such as Precision, Recall and F1-score with the options for a more lenient evaluation.
+CLUEval is a Python module and command line interface for evaluating span predictions. It provides common metrics such as precision, recall, and F1-score, with the possibility of choosing between strict and different levels of lenient evaluation.
 
 ## Installation
 ```sh
 pip install git+https://github.com/fau-klue/CLUEval
 ```
-### Requirements
+
+### Dependencies
 - pandas
 - numpy
 - networkx
 
+
+## Usage
+CLUEval expects input data in verticalised text format (VRT) with BIO tagging of tokens (see `tests/data/candidate.bio`):
+```
+----------|O|O|O
+AMTSGERICHT|B-anon|B-court-name|B-niedrig
+ERLANGEN|I-anon|I-court-name|I-niedrig
+----------|O|O|O
+```
+
+Further meta information can be included as further token-level annotation in the VRT file, such as predefined token IDs, document IDs, or text domains (see `tests/data/reference.bio`):
+
+```
+----------|O|token_0|fictitious_1512|Fictitious_Domain
+AMTSGERICHT|B-niedrig|token_1|fictitious_1512|Fictitious_Domain
+ERLANGEN|I-niedrig|token_2|fictitious_1512|Fictitious_Domain
+----------|O|token_3|fictitious_1512|Fictitious_Domain
+```
+
 ## Features
+
+### Metrics
+
+- Precision, Recall and F1
+- Labelled vs. unlabelled evaluation
+  
+### Lenient evaluation
+
+- CLUEval allows lenient evaluation, which considers more spans than just exact matches as correct
+- Consider the following gold span (G) vs. five different kinds of prediction spans (P):
+
+```
+G      |==========|
+
+P      |----------|        0. Exact match
+    |-------------|        1. Superset
+     
+       |---||-----|        2. Tiling
+     |--------||----|      3. Overlap
+     
+    (all other cases)      4. False negative
+```
+
+- When calculating recall, gold spans are classified in true positives (TP) and false negatives (FN).
+- Exact matches are always counted as TP. The level of leniency determines which of the remaining cases are classified as TP.
+  - Superset: The reference span is contained in the candidate span.
+  - Tiling: The reference span matches multiple adjacent candidate spans exactly.
+  - Overlap: The reference span overlaps with several adjacent candidate spans but does not exceed the length of the combined candidate spans.
+- Lenient level:
+  - 0: Strict evaluation, i.e. not lenient (default)
+  - 1: Superset
+  - 2: Superset + tiling
+  - 3: Superset + tiling + overlap
+- Precision is calculated simply by switching gold and prediction spans.
 
 ### Join multihead classification 
 - Combine spans from multiple classification headers into a single span via an adjacency matrix
 - Head labels will be determined by majority voting
 
-### Lenient evaluation
-- CLUEval also allows lenient evaluation and accept consider following overlap cases as true positive:
-  - Subset: The reference span is contained in candidate.
-  - Tiling: The reference span matches multiple adjacent candidates exactly.
-  - Overlap: The reference span overlaps several adjacent candidates but should not exceed the length of combined candidate spans.  
-- Lenient level:
-  - 0: No lenient (Default)
-  - 1: Subset
-  - 2: Subset + tiling
-  - 3: Subset + tiling + overlap
-
-### Metrics
-- Precision, Recall and F1
-- Span-wise evaluation
-  - Compute evaluation metrics without taking the span label into account 
-  - Compare spans according to the aforementioned lenient level
-- Categorical span-wise evaluation
-  - Information category is also considered in the evaluation
-  
 ### Table for error analysis
 - CLUEval provides a table for error analysis with colour coded text spans
   - Green (🟩): Tokens occur in both reference and candidate.
@@ -43,27 +78,6 @@ pip install git+https://github.com/fau-klue/CLUEval
   - Orange (🟧): Tokens appear only in candidate span. 
 - Option to input the window size of context information
 
-## Usage
-CLUEval expects input data in vertical format (VRT) with BIO tagging scheme.
-
-```python
-# fiktives-urteil-p1.bio
-# 
-# ----------	O	O	O
-# AMTSGERICHT	B-anon	B-court-name	B-niedrig
-# ERLANGEN	I-anon	I-court-name	I-niedrig
-# ----------	O	O	O
-```
-Further meta information can be included in the VRT file, such as predefined token IDs, document IDs and text domains. 
-
-```python
-# reference.bio
-# 
-# ----------	O	token_0	fictitious_1512	Fictitious_Domain
-# AMTSGERICHT	B-niedrig	token_1	fictitious_1512	Fictitious_Domain
-# ERLANGEN	I-niedrig	token_2	fictitious_1512	Fictitious_Domain
-# ----------	O	token_3	fictitious_1512	Fictitious_Domain
-```
 
 ### cluevaluate executable script
 ```
