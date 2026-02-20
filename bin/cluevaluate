@@ -61,7 +61,7 @@ def arguments():
         type=str,
         default=None,
         choices=["subset", "unmatch", "overlap"],
-        help="Filter spans by error types and return error tables. Default choice is 'unmatch' when this option is passed without any further arguments."
+        help="Filter spans by error types and return error tables. Default setting is 'unmatch' when the option is passed without any addiitonal parameters."
     )
     parser.add_argument(
         "-l",
