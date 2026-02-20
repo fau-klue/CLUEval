@@ -17,7 +17,9 @@ class Match:
         match_df.loc[exact_mask, ["start_Y", "end_Y"]] = match_df.loc[exact_mask][["start", "end"]].values
         match_df.drop(columns=["id",
                             "id_y",
-                            f"id_Y",
+                            "id_Y",
+                            "doc_id_Y",
+                            "domain_Y"
                             ], inplace=True)
         # Fill Nan values in label columns with "FN"
         for column in self.annotation_layer:
