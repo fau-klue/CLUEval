@@ -1,0 +1,57 @@
+----------	O	token_0	fictitious_1512	Fictitious_Domain
+AMTSGERICHT	B-niedrig	token_1	fictitious_1512	Fictitious_Domain
+ERLANGEN	I-niedrig	token_2	fictitious_1512	Fictitious_Domain
+----------	O	token_3	fictitious_1512	Fictitious_Domain
+
+Mozartstraße	B-hoch	token_4	fictitious_1512	Fictitious_Domain
+23	I-hoch	token_5	fictitious_1512	Fictitious_Domain
+,	I-hoch	token_6	fictitious_1512	Fictitious_Domain
+91052	I-hoch	token_7	fictitious_1512	Fictitious_Domain
+Erlangen	I-hoch	token_8	fictitious_1512	Fictitious_Domain
+
+HELGA	B-hoch	token_9	fictitious_1512	Fictitious_Domain
+SCHMIDT	I-hoch	token_10	fictitious_1512	Fictitious_Domain
+,	O	token_11	fictitious_1512	Fictitious_Domain
+Schillerstraße	B-hoch	token_12	fictitious_1512	Fictitious_Domain
+4	I-hoch	token_13	fictitious_1512	Fictitious_Domain
+,	I-hoch	token_14	fictitious_1512	Fictitious_Domain
+91058	I-hoch	token_15	fictitious_1512	Fictitious_Domain
+Erlangen	I-hoch	token_16	fictitious_1512	Fictitious_Domain
+
+Rechtsanwälte	B-mittel	token_17	fictitious_1512	Fictitious_Domain
+Schneider	I-mittel	token_18	fictitious_1512	Fictitious_Domain
+&	I-mittel	token_19	fictitious_1512	Fictitious_Domain
+Kollegen	I-mittel	token_20	fictitious_1512	Fictitious_Domain
+,	O	token_21	fictitious_1512	Fictitious_Domain
+Wiener	B-hoch	token_22	fictitious_1512	Fictitious_Domain
+Straße	I-hoch	token_23	fictitious_1512	Fictitious_Domain
+12	I-hoch	token_24	fictitious_1512	Fictitious_Domain
+,	I-hoch	token_25	fictitious_1512	Fictitious_Domain
+90431	I-hoch	token_26	fictitious_1512	Fictitious_Domain
+Nürnberg	I-hoch	token_27	fictitious_1512	Fictitious_Domain
+
+Steinbrecher	B-mittel	token_28	fictitious_1512	Fictitious_Domain
++	I-mittel	token_29	fictitious_1512	Fictitious_Domain
+Amberger	I-mittel	token_30	fictitious_1512	Fictitious_Domain
+Rechtsanwälte	I-mittel	token_31	fictitious_1512	Fictitious_Domain
+PartGmbB	I-mittel	token_32	fictitious_1512	Fictitious_Domain
+,	O	token_33	fictitious_1512	Fictitious_Domain
+Gothestraße	B-hoch	token_34	fictitious_1512	Fictitious_Domain
+1	I-hoch	token_35	fictitious_1512	Fictitious_Domain
+,	I-hoch	token_36	fictitious_1512	Fictitious_Domain
+91056	I-hoch	token_37	fictitious_1512	Fictitious_Domain
+Erlangen	I-hoch	token_38	fictitious_1512	Fictitious_Domain
+
+Die	O	token_39	fictitious_1512	Fictitious_Domain
+Kläger	O	token_40	fictitious_1512	Fictitious_Domain
+sind	O	token_41	fictitious_1512	Fictitious_Domain
+Eigentümer	O	token_42	fictitious_1512	Fictitious_Domain
+des	O	token_43	fictitious_1512	Fictitious_Domain
+Anwesens	O	token_44	fictitious_1512	Fictitious_Domain
+Feldstraße	B-hoch	token_45	fictitious_1512	Fictitious_Domain
+5	I-hoch	token_46	fictitious_1512	Fictitious_Domain
+a	I-hoch	token_47	fictitious_1512	Fictitious_Domain
+,	I-hoch	token_48	fictitious_1512	Fictitious_Domain
+91096	I-hoch	token_49	fictitious_1512	Fictitious_Domain
+Möhrendorf	I-hoch	token_50	fictitious_1512	Fictitious_Domain
+.	O	token_51	fictitious_1512	Fictitious_Domain
