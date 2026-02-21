@@ -1,6 +1,6 @@
 # CLUEval
 
-CLUEval is a Python module and command line interface for evaluating span predictions. It provides common metrics such as precision, recall, and F1-score, with the possibility of choosing between strict and different levels of lenient evaluation.
+CLUEval is a Python module and command line interface for evaluating span predictions. It expects two sequences of non-overlapping spans, denoted as **G** = gold spans and **P** = predicted spans (but they could also be predictions of two different models or spans from two human annotators). CLUEval provides common metrics such as precision, recall, and F1-score, with the possibility of choosing between strict and different levels of lenient evaluation.
 
 ## Installation
 ```sh
@@ -35,12 +35,16 @@ Further information can be included as token-level annotation in the VRT file, s
 
 ### Metrics
 
-- Precision, Recall and F1
+- Calculation of
+  + precision
+  + recall
+  + F1 (harmonic mean between precision and recall)
 - Labelled vs. unlabelled evaluation
-  
+
 ### Lenient evaluation
 
-- CLUEval allows lenient evaluation, which considers more spans than just exact matches as correct
+- When calculating **recall**, gold spans are classified in true positives (TP) and false negatives (FN).
+- CLUEval allows lenient evaluation, which considers more spans than just exact matches as correct.
 - Consider the following gold span (G) vs. five different kinds of prediction spans (P):
 
 ```
@@ -52,20 +56,20 @@ P      |----------|        0. Exact match
        |---||-----|        2. Tiling
      |--------||----|      3. Overlap
      
-    (all other cases)      4. False negative
+    (all other cases)      4. FN
 ```
 
-- When calculating recall, gold spans are classified in true positives (TP) and false negatives (FN).
-- Exact matches are always counted as TP. The level of leniency determines which of the remaining cases are classified as TP.
-  - Superset: The reference span is contained in the candidate span.
-  - Tiling: The reference span matches multiple adjacent candidate spans exactly.
-  - Overlap: The reference span overlaps with several adjacent candidate spans but does not exceed the length of the combined candidate spans.
-- Lenient level:
-  - 0: Strict evaluation, i.e. not lenient (default)
-  - 1: Superset
-  - 2: Superset + tiling
-  - 3: Superset + tiling + overlap
-- Precision is calculated simply by switching gold and prediction spans.
+- The level of leniency determines in which cases the gold span is classified as TP.
+  - Exact matches: The gold span and the prediction span are identical.
+  - Superset: The gold span is contained in the prediction span.
+  - Tiling: The gold span matches multiple adjacent prediction spans exactly.
+  - Overlap: The gold span overlaps with several adjacent prediction spans but does not exceed the length of the combined prediction spans.
+- Corresponding levels of leniency:
+  - 0: strict evaluation, i.e. only exact matches are classified as TP (default)
+  - 1: incl. superset
+  - 2: incl. superset + tiling
+  - 3: incl. superset + tiling + overlap
+- Calculation of **precision** is accomplished by simply switching gold and prediction spans.
 
 ### Join multihead classification 
 - Combine spans from multiple classification headers into a single span via an adjacency matrix
