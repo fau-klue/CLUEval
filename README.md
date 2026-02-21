@@ -12,24 +12,24 @@ pip install git+https://github.com/fau-klue/CLUEval
 - numpy
 - networkx
 
+## Input format
+CLUEval expects input data in verticalised text format (VRT), where each token is on a separate line an annotated with BIO tags. Here is an example with three different annotation layers (see `tests/data/candidate.bio`):
 
-## Usage
-CLUEval expects input data in verticalised text format (VRT) with BIO tagging of tokens (see `tests/data/candidate.bio`):
-```
-----------|O|O|O
-AMTSGERICHT|B-anon|B-court-name|B-niedrig
-ERLANGEN|I-anon|I-court-name|I-niedrig
-----------|O|O|O
-```
+|              |        |              |           |
+|--------------|--------|--------------|-----------|
+| `----------` | O      | O            | O         |
+| AMTSGERICHT  | B-anon | B-court-name | B-niedrig |
+| ERLANGEN     | I-anon | I-court-name | I-niedrig |
+| `----------` | O      | O            | O         |
 
-Further meta information can be included as further token-level annotation in the VRT file, such as predefined token IDs, document IDs, or text domains (see `tests/data/reference.bio`):
+Further information can be included as token-level annotation in the VRT file, such as predefined token IDs, document IDs, or text domains (see `tests/data/reference.bio`):
 
-```
-----------|O|token_0|fictitious_1512|Fictitious_Domain
-AMTSGERICHT|B-niedrig|token_1|fictitious_1512|Fictitious_Domain
-ERLANGEN|I-niedrig|token_2|fictitious_1512|Fictitious_Domain
-----------|O|token_3|fictitious_1512|Fictitious_Domain
-```
+|              |           |         |                 |                   |
+|--------------|-----------|---------|-----------------|-------------------|
+| `----------` | O         | token_0 | fictitious_1512 | Fictitious_Domain |
+| AMTSGERICHT  | B-niedrig | token_1 | fictitious_1512 | Fictitious_Domain |
+| ERLANGEN     | I-niedrig | token_2 | fictitious_1512 | Fictitious_Domain |
+| `----------` | O         | token_3 | fictitious_1512 | Fictitious_Domain |
 
 ## Features
 
@@ -78,6 +78,7 @@ P      |----------|        0. Exact match
   - Orange (🟧): Tokens appear only in candidate span. 
 - Option to input the window size of context information
 
+## Usage
 
 ### cluevaluate executable script
 ```
