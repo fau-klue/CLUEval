@@ -51,25 +51,26 @@ Further information can be included as token-level annotation in the VRT file, s
 G      |==========|
 
 P      |----------|        0. Exact match
-    |-------------|        1. Superset
+    |-------------|        1. Subset
      
        |---||-----|        2. Tiling
      |--------||----|      3. Overlap
      
-    (all other cases)      4. FN
+    (all other cases)      4. Unmatch
 ```
 
 - The level of leniency determines in which cases the gold span is classified as TP.
   - Exact matches: The gold span and the prediction span are identical.
-  - Superset: The gold span is contained in the prediction span.
+  - Subset: The gold span is contained in the prediction span.
   - Tiling: The gold span matches multiple adjacent prediction spans exactly.
   - Overlap: The gold span overlaps with several adjacent prediction spans but does not exceed the length of the combined prediction spans.
 - Corresponding levels of leniency:
   - 0: strict evaluation, i.e. only exact matches are classified as TP (default)
-  - 1: incl. superset
-  - 2: incl. superset + tiling
-  - 3: incl. superset + tiling + overlap
+  - 1: incl. subset
+  - 2: incl. subset + tiling
+  - 3: incl. subset + tiling + overlap
 - Calculation of **precision** is accomplished by simply switching gold and prediction spans.
+- *Unmatch* cases are considered as FN when calculating recall, and FP when calculating precision.
 
 ### Join multihead classification 
 - Combine spans from multiple classification headers into a single span via an adjacency matrix
