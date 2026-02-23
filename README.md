@@ -275,7 +275,7 @@ erroneous_table.head(1)
 # | ---              | ---            |               -100 |             -100 | ---      | court-name   | niedrig | ---      | AMTSGERICHT ERLANGEN | ---         | ---------- 🟥AMTSGERICHT ERLANGEN🟥 ----------                                                                                         | unmatch      |           |
 
 ```
-##### Columns
+##### Columns in ErrorTable dataframe
 `token_id_start` : Predefined token ID for span start token in reference corpus<br>
 `token_id_end`: Predefined token ID for span end token in reference corpus<br>
 `token_id_start_Y`: Predefined token ID for span start token in candidate corpus<br>
