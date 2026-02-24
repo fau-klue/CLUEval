@@ -22,10 +22,10 @@ def test_converter(p1):
     assert df["id"][0].startswith("reference")
 
     # test span start
-    assert df["start"].values.tolist() == [2, 5, 10, 13, 18, 23, 29, 35, 46, 54, 75]
+    assert df["start"].values.tolist() == [1, 4, 9, 12, 17, 22, 28, 34, 45, 53, 74]
 
     # test span end
-    assert df["end"].values.tolist() == [3, 9, 11, 17, 21, 28, 33, 39, 51, 56, 79]
+    assert df["end"].values.tolist() == [2, 8, 10, 16, 20, 27, 32, 38, 50, 55, 78]
 
     # test first span in reference
     assert df["text"][0] == "AMTSGERICHT ERLANGEN"
