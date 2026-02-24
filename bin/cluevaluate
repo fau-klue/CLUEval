@@ -95,9 +95,9 @@ def arguments():
         "--error_type",
         nargs="*",
         type=str,
-        default=None,
+        default="unmatched",
         choices=["contained", "tiled", "covered", "unmatched"],
-        help="Filter spans by error types and return error tables. Default setting is 'unmatched' when the option is passed without any addiitonal parameters."
+        help="Filter spans by error types and return error tables. Default setting is 'unmatched' when the option is passed without any additional parameters."
     )
     parser.add_argument(
         "-m",
@@ -116,8 +116,9 @@ def arguments():
     parser.add_argument(
         "-w",
         "--write_to_file",
-        action="store_true",
-        help="Write tables to files? (Path will be determined automatically)"
+        default=None,
+        type=str,
+        help="Optional argument to save table to file. The 'tables' folder will be created automatically in the current working directory."
     )
     return parser.parse_args()
 
