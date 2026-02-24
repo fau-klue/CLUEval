@@ -50,6 +50,19 @@ Further information, such as token IDs, document IDs, or text domains, can be in
 
 ## Features
 
+### Multilayer span
+
+- Convert tokens to span: 
+  - Extract tagged tokens for each annotation layer (Ignore O-tag).
+  - Combine consecutive tokens into a whole span.
+  - Extract span label by removing B- and I-tags.
+- Unify spans across annotation layers:
+  - Identify spans that overlap across layers.
+  - Merge these spans into a unified span via adjacent matrix.
+- Span label:
+  - Collect predicted label for each combined span.
+  - Assign label according to majority vote.
+
 ### Metrics
 
 - Calculation of precision, recall, and F1 (harmonic mean between precision and recall)
@@ -84,24 +97,35 @@ C      |----------|        0. exact
   - 2: incl. contained + tiled matches
   - 3: incl. contained + tiled + covered matches (**default**)
 - All other kinds of (partially matched or unmatched) reference spans are counted as false negative (FN).
-- The calculation of **precision** is accomplished by calculating recall for reference spans with regards to candidate annotations.
-
-### Multilayer evaluation
-- TODO
-
-- annotation layers will be combined into one classification head first
-- Join multihead classification
-- Combine spans from multiple classification headers into a single span via an adjacency matrix
-- Head labels will be determined by majority voting
-
-### Labelled evaluation
-- TODO
-
-### Span evaluation filtered by label column
-- TODO
+- The calculation of **precision** is accomplished by calculating recall for reference spans with regard to candidate annotations.
 
 ### Precision and recall tables
-- TODO
+- Prepare table:
+  - Match spans in reference and candidate tables via their **corpus positions** (start and end offsets).
+  - Identify all **exact** matches with inner join and keep them in a separate table.
+  - For remaining spans, check for lenient matches and assign span status accordingly (see **Lenient evaluation**).
+  - Concat all spans into a unified dataframe. 
+- **Precision** table: 
+  - Match candidate to reference spans.
+  - Show how many candidate spans were correct with respect to reference.
+- **Recall** table: 
+  - Match reference to candidate.
+  - Show how many annotated spans are correctly identified.
+### Span evaluation
+- Evaluate how accurately the model can identify the spans without considering the labels.
+- Compare the start and end positions of reference and candidate spans with respect to the lenient level.
+
+### Span evaluation filtered by label column
+- Filter spans:
+  - Select a label column from reference to filter spans.
+  - Specify the column value to retain relevant spans in precision and recall tables for evaluation. 
+- Compute span-wise metrics for filtered spans **without comparing the label values in R and C**.
+
+### Labelled evaluation
+
+- Calculate span-wise evaluation metrics with label-matching for each label column separately.
+- Only spans that **satisfy the lenient level and match in labels** are considered as true positive (TP).
+- All other cases will be counted as false negative (FN), or false positive (FP), respectively.
 
 ### Error analysis tables
 - CLUEval provides a table for error analysis with colour coded text spans
