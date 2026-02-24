@@ -95,7 +95,7 @@ def arguments():
         "--error_type",
         nargs="*",
         type=str,
-        default="unmatched",
+        default=None,
         choices=["contained", "tiled", "covered", "unmatched"],
         help="Filter spans by error types and return error tables. Default setting is 'unmatched' when the option is passed without any additional parameters."
     )
