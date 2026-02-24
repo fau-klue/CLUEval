@@ -1,12 +1,13 @@
 from clueval.spans_table import Convert, Match
 # import pytest
 
+
 def test_converter(p1):
 
     converter = Convert(p1, annotation_layer=["confidence"], token_id_column=2, doc_id_column=3, domain_column=4)
-    print(converter)
+    # print(converter)
     df = converter(id_prefix="reference")
-   
+
     # test not empty
     assert df.shape[0] != 0
 
@@ -14,7 +15,7 @@ def test_converter(p1):
     assert df.shape[0] == 11
 
     # test required columns
-    required_columns = ["start", "end", "token_id_start" , "token_id_end", "text" , "doc_id", "domain", "confidence", "id"]
+    required_columns = ["start", "end", "token_id_start", "token_id_end", "text", "doc_id", "domain", "confidence", "id"]
     assert sorted(df.columns.tolist()) == sorted(required_columns)
 
     # test id prefix
@@ -64,14 +65,14 @@ def test_match(p1, p2):
     precision_match = Match(cand, ref, annotation_layer=["confidence"])(on=["start", "end"])[["start", "end", "confidence", "confidence_Y", "status"]]
 
     # test overlap cases in recall table
-    assert recall_match["status"][0] == "subset"
-    assert recall_match["status"][1] == "tiling"
+    assert recall_match["status"][0] == "contained"
+    assert recall_match["status"][1] == "tiled"
     assert recall_match["status"][2] == "exact"
-    assert recall_match["status"][3] == "unmatch"
+    assert recall_match["status"][3] == "unmatched"
 
     # test overlap cases in precision table
-    assert precision_match["status"][0] == "unmatch"
-    assert precision_match["status"][1] == "subset"
+    assert precision_match["status"][0] == "unmatched"
+    assert precision_match["status"][1] == "contained"
     assert precision_match["status"][3] == "exact"
     assert "tiling" not in precision_match["status"].unique()
 
