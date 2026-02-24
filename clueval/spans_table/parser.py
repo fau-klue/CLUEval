@@ -91,7 +91,6 @@ class BioToSpanParser:
             for i, line in enumerate(lines):
                 current_line = line.strip().split("\t")
                 if len(current_line) > 1:
-                    position += 1
                     # Extract document id if available
                     if doc_id_column is not None:
                         doc_id = current_line[doc_id_column]
@@ -120,6 +119,8 @@ class BioToSpanParser:
                         doc_id=doc_id,
                         domain=domain,
                     )
+                    position += 1
+
 
     def extract_spans_from_iob(self, tag_column=1, doc_id_column: int | None = None):
         """
@@ -156,7 +157,6 @@ class BioToSpanParser:
                 if len(current_line) > 1:
                     if doc_id_column is not None:
                         doc_id = current_line[doc_id_column]
-                    position += 1
                     # Check if doc_id != current_doc_id
                     if doc_id != current_doc_id:
                         current_doc_id = doc_id
@@ -187,3 +187,4 @@ class BioToSpanParser:
                                 head=tag_column,
                             )
                             label = None
+                    position += 1
