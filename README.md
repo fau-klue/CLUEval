@@ -171,33 +171,31 @@ options:
   -w, --write_to_file   Write tables to files? (Path will be determined automatically) (default: False)
 ```
 
-#### Examples
+#### Examples with fictitious verdict
 
-- TODO: should work on our provided data
-
-- Basic evaluation
+- Basic span-wise evaluation
 ```sh
-cluevaluate <REFERENCE> <PREDICTION> -l 0
+cluevaluate ./tests/data/fiktives-urteil-p1.bio ./tests/data/fiktives-urteil-p2.bio -l 0
 ```
 - Multilayer evaluation
 ```sh
-cluevaluate <REFERENCE> <PREDICTION> -a ner_tags pos_tags
+cluevaluate ./tests/data/fiktives-urteil-p1.bio ./tests/data/fiktives-urteil-p2.bio -a span entity
 ```
 - Labelled evaluation
 ```sh
-cluevaluate <REFERENCE> <PREDICTION> -a ner_tags pos_tags -lc pos_tags
+cluevaluate ./tests/data/fiktives-urteil-p1.bio ./tests/data/fiktives-urteil-p2.bio -a span entity risk -lc entity risk
 ```
 - Span evaluation filtered by label column
 ```sh
-cluevaluate <REFERENCE> <PREDICTION> -a ner_tags pos_tags -sl ner_tags -slv PERSON
+cluevaluate ./tests/data/fiktives-urteil-p1.bio ./tests/data/fiktives-urteil-p2.bio -a span entity -sl entity -slv nat-name
 ```
 - Include Precision and Recall tables
 ```sh
-cluevaluate <REFERENCE> <PREDICTION> -a ner_tags pos_tags -m
+cluevaluate ./tests/data/fiktives-urteil-p1.bio ./tests/data/fiktives-urteil-p2.bio -a ner_tags pos_tags -m
 ```
 - Include error tables; NB: 'unmatched' is the default setting when the `-e` argument is passed without any additional parameters.
 ```sh
-cluevaluate <REFERENCE> <PREDICTION> -a ner_tags pos_tags -e unmatch subset
+cluevaluate ./tests/data/fiktives-urteil-p1.bio ./tests/data/fiktives-urteil-p2.bio -a ner_tags pos_tags -e unmatched contained
 ```
 
 ### Module
