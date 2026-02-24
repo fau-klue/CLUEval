@@ -1,26 +1,27 @@
 import warnings
-warnings.simplefilter(action="ignore", category=FutureWarning) # Suppress pandas FutureWarnings for the groupby() function for now
+warnings.simplefilter(action="ignore", category=FutureWarning)  # Suppress pandas FutureWarnings for the groupby() function for now
 
 import pandas as pd
 
+
 class Match:
-    def __init__(self, x: pd.DataFrame, y: pd.DataFrame, annotation_layer:str|list[str]):
+    def __init__(self, x: pd.DataFrame, y: pd.DataFrame, annotation_layer: str | list[str]):
         self.x = x
         self.y = y
         self.annotation_layer = annotation_layer if isinstance(annotation_layer, list) else [annotation_layer]
 
-    def __call__(self, on:str|list[str]):
+    def __call__(self, on: str | list[str]):
         exact = self.exact_match(self.x, self.y, on=on)
         rest = self.rest_match(exact)
         match_df = pd.concat([exact, rest], ignore_index=True).sort_values(by=["start", "end"])
         exact_mask = match_df["status"] == "exact"
         match_df.loc[exact_mask, ["start_Y", "end_Y"]] = match_df.loc[exact_mask][["start", "end"]].values
         match_df.drop(columns=["id",
-                            "id_y",
-                            "id_Y",
-                            "doc_id_Y",
-                            "domain_Y"
-                            ], inplace=True)
+                               "id_y",
+                               "id_Y",
+                               "doc_id_Y",
+                               "domain_Y"
+                               ], inplace=True)
         # Fill Nan values in label columns with "FN"
         for column in self.annotation_layer:
             match_df.fillna({column + "_Y": "FN"}, inplace=True)
@@ -29,7 +30,7 @@ class Match:
         return match_df.reset_index(drop=True)
 
     @staticmethod
-    def exact_match(x:pd.DataFrame, y: pd.DataFrame, on:str|list[str]):
+    def exact_match(x: pd.DataFrame, y: pd.DataFrame, on: str | list[str]):
         """ x.s0 == y.s1 & x.e0 == y.e1 """
         return x.merge(y, on=on, suffixes=("", "_Y"), how="inner").assign(status="exact")
 
@@ -39,23 +40,24 @@ class Match:
         :return:
         """
         # Temporarily remove exact matches from x and y
-        x_rest = self.x.loc[~self.x["id"].isin(exact_df[f"id"])].reset_index(drop=True).assign(status="rest")
+        x_rest = self.x.loc[~self.x["id"].isin(exact_df["id"])].reset_index(drop=True).assign(status="rest")
         x_rest = x_rest.assign(id_y="")
-        y_rest = self.y.loc[~self.y["id"].isin(exact_df[f"id_Y"])].reset_index(drop=True).assign(status="rest")
+        y_rest = self.y.loc[~self.y["id"].isin(exact_df["id_Y"])].reset_index(drop=True).assign(status="rest")
         y_rest = y_rest.assign(id_x="")
 
-        # Case 2: x is a subset of y
-        x_rest = self.subset(x_rest, y_rest)
+        # Case 2: x is contained in y [original jargon: "x is a subset of y"]
+        x_rest = self.contained(x_rest, y_rest)
 
         # Check overlaps between x and y. Assign status according to following conditions:
-        # 1. Overlap: If spans in y overlap with x and belong to an adjacent span. We can use this case for determining tiling (case 3) and remaining overlaps (case 4).
+        # 1. Overlap: If spans in y overlap with x and belong to an adjacent span. We can use this case for determining tiled matches (case 3)
+        #             and remaining overlaps (case 4).
         # 2. Assign span to case 5: FN - if spans in y overlap with x but do not belong to any adjacent span
         x_rest = self.overlap(x_rest, y_rest)
-        # Case 5: All remaining rows in x are considered as "unmatching" between x_rest and y_rest
-        x_rest.loc[x_rest["status"] == "rest", "status"] = "unmatch"
+        # Case 5: All remaining rows in x are considered as "unmatched" between x_rest and y_rest
+        x_rest.loc[x_rest["status"] == "rest", "status"] = "unmatched"
         return x_rest
 
-    def subset(self, x: pd.DataFrame, y: pd.DataFrame):
+    def contained(self, x: pd.DataFrame, y: pd.DataFrame):
         """ Remaining rows after omitting exact matches:
         y.s1 <= x.s0 & y.e1 >= x.e0
         """
@@ -66,14 +68,14 @@ class Match:
             if not superset_y.empty:
                 matched_id = superset_y.id.values[0]
                 x.at[i, "id_y"] = matched_id
-                x.at[i, "status"] = "subset"
+                x.at[i, "status"] = "contained"
                 x.loc[i, y_columns] = superset_y.loc[:, [column.strip("_Y") for column in y_columns]].iloc[0].values
         return x
 
     def overlap(self, x: pd.DataFrame, y: pd.DataFrame):
         """ Consider overlap cases, where x could be covered by y spans in two different ways:
-        1. Tiling: x has the same start and end positions as adjacent spans in y
-        2. Overlap: x is covered by longer adjacent spans in y
+        1. tiled: x has the same start and end positions as adjacent spans in y
+        2. covered: x is covered by longer adjacent spans in y
         :param x: Rest x dataframe
         :param y: Rest y dataframe
         :return:
@@ -92,20 +94,22 @@ class Match:
                     if adjacent:
                         # Flag adjacency and generate adjacency dataframe for overlap
                         overlap["adjacent"] = 1
-                        overlap["number_overlapping_tokens_with_x"] = overlap.apply(lambda r: len([token for token in r["text"].split() if token in row["text"].split()]), axis=1)
+                        overlap["number_overlapping_tokens_with_x"] = overlap.apply(
+                            lambda r: len([token for token in r["text"].split() if token in row["text"].split()]), axis=1
+                        )
                         overlap["id_x"] = row["id"]
                         adjacent_overlap = overlap.groupby("adjacent").apply(self.unify_adjacent_spans, headers_column=self.annotation_layer)
                         _x.at[i, "id_y"] = adjacent_overlap["id"]
                         # Insert spans information from overlap to _x
                         _x.loc[i, y_columns] = adjacent_overlap.loc[:, [column.strip("_Y") for column in y_columns]].iloc[0].values
-                        # Check whether x.s1 == y.s0 && x.e0 == y.e1 (tiling) or y.s1 <= x.s0 && y.e1 >= x.e0 (overlap)
+                        # Check whether x.s1 == y.s0 && x.e0 == y.e1 (tiled) or y.s1 <= x.s0 && y.e1 >= x.e0 (covered [originally: "overlap"])
                         if adjacent_overlap["start"].item() == row["start"] and adjacent_overlap["end"].item() == row["end"]:
-                            _x.at[i, "status"] = "tiling"
+                            _x.at[i, "status"] = "tiled"
                         elif adjacent_overlap["start"].item() <= row["start"] and adjacent_overlap["end"].item() >= row["end"]:
-                            _x.at[i, "status"] = "overlap"
+                            _x.at[i, "status"] = "covered"
                     else:
-                        # Assign 'unmatch' to status in _x
-                        _x.at[i, "status"] = "unmatch"
+                        # Assign 'unmatched' to status in _x
+                        _x.at[i, "status"] = "unmatched"
         return _x
 
     @staticmethod

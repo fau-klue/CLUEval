@@ -31,9 +31,9 @@ class MetricsForSpansAnonymisation(Metrics):
         self.recall_table = recall_table
         self.lenient_levels = {
             0: ["exact"],
-            1: ["exact", "subset"],
-            2: ["exact", "subset", "tiling"],
-            3: ["exact", "subset", "tiling", "overlap"],
+            1: ["exact", "contained"],
+            2: ["exact", "contained", "tiled"],
+            3: ["exact", "contained", "tiled", "covered"],
         }
         self.metrics = dict(
             P=0.0,
@@ -58,9 +58,9 @@ class MetricsForSpansAnonymisation(Metrics):
         :param lenient_level: Decide whether to include lenient spans or not.
                 Default: 0: only exact matches.
                 Options:
-                - 1: ["exact", "subset"],
-                - 2: ["exact", "subset", "tiling"],
-                - 3: ["exact", "subset", "tiling", "overlap"]
+                - 1: ["exact", "contained"],
+                - 2: ["exact", "contained", "tiled"],
+                - 3: ["exact", "contained", "tiled", "covered"]
         :param row_name: Row name as index
         """
         if 0 <= lenient_level <= 3:
@@ -127,9 +127,9 @@ class MetricsForCategoricalSpansAnonymisation(Metrics):
         )
         self.lenient_levels = {
             0: ["exact"],
-            1: ["exact", "subset"],
-            2: ["exact", "subset", "tiling"],
-            3: ["exact", "subset", "tiling", "overlap"],
+            1: ["exact", "contained"],
+            2: ["exact", "contained", "tiled"],
+            3: ["exact", "contained", "tiled", "covered"],
         }
         self.metrics = dict(
             P=0.0,
@@ -154,7 +154,7 @@ class MetricsForCategoricalSpansAnonymisation(Metrics):
             )
         return pd.concat(categorical_metrics)
 
-    def compute_metrics(self, lenient_level: int = 0, input_category:str=None):
+    def compute_metrics(self, lenient_level: int = 0, input_category: str = None):
         """
         Method to compute classification metrics for given category.
         Compute evaluation metrics:
@@ -163,9 +163,9 @@ class MetricsForCategoricalSpansAnonymisation(Metrics):
         :param lenient_level: Decide whether to include lenient spans or not.
                 Default: 0: only exact matches.
                 Options:
-                - 1: ["exact", "subset"],
-                - 2: ["exact", "subset", "tiling"],
-                - 3: ["exact", "subset", "tiling", "overlap"]
+                - 1: ["exact", "contained"],
+                - 2: ["exact", "contained", "tiled"],
+                - 3: ["exact", "contained", "tiled", "covered"]
         """
         # Conditions for TP:
         # 1. Exact match and additional lenient levels
