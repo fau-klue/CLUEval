@@ -23,7 +23,7 @@ class BioToSentenceParser:
                 if line.strip() != "":
                     token = line.split("\t")[0]
                     sent.append(token)
-                    token_ids.append(self.token_id+1)
+                    token_ids.append(self.token_id)
                     self.token_id += 1
                 else:
                     yield token_ids, sent
