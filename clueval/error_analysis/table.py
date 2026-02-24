@@ -57,9 +57,6 @@ class ErrorTable:
 
     @staticmethod
     def extract_and_highlight_spans(input_df:pd.DataFrame, gold_sentence_mapping:dict,  annotation_layer: str|list[str], windows:int=10):
-        #TODO: Revise this method: Highlight all candidate spans for each reference span. At the moment, candidate spans are considered separately for the same gold annotation
-        # Extract contexts for manual analysis
-
         input_df = input_df.copy()
         if isinstance(annotation_layer, str):
             annotation_layer = [annotation_layer]
