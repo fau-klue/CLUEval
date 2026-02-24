@@ -85,7 +85,6 @@ class OverlapComponentUnifier:
             graph.add_node(i, span=span)
 
         for i, s1 in enumerate(self.spans):
-            # for j in range(i+1, len(self.spans)):
             for j, s2 in enumerate(self.spans[i+1:], start=i+1):
                 if self.overlap(s1, s2):
                     graph.add_edge(i, j)

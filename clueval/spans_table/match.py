@@ -49,9 +49,9 @@ class Match:
         x_rest = self.contained(x_rest, y_rest)
 
         # Check overlaps between x and y. Assign status according to following conditions:
-        # 1. Overlap: If spans in y overlap with x and belong to an adjacent span. We can use this case for determining tiled matches (case 3)
-        #             and remaining overlaps (case 4).
-        # 2. Assign span to case 5: FN - if spans in y overlap with x but do not belong to any adjacent span
+        # 1. Overlaps: If x spans overlap adjacent spans in y. We can use this case for determining tiled matches (case 3)
+        #             and remaining covering cases (case 4).
+        # 2. Assign span to case 5: unmatched - if spans in y overlap with x but do not belong to any adjacent span
         x_rest = self.overlap(x_rest, y_rest)
         # Case 5: All remaining rows in x are considered as "unmatched" between x_rest and y_rest
         x_rest.loc[x_rest["status"] == "rest", "status"] = "unmatched"
@@ -114,7 +114,7 @@ class Match:
 
     @staticmethod
     def unify_adjacent_spans(adjacent_df, headers_column):
-        """ Combine spans information fr
+        """ Combine spans information from adjacent dataframe.
         :param adjacent_df: Grouped dataframe with adjacent span information
         :param headers_column: Prediction head columns
         :return:
