@@ -58,7 +58,7 @@ Further information, such as token IDs, document IDs, or text domains, can be in
   - Extract span label by removing B- and I-tags.
 - Unify spans across annotation layers:
   - Identify spans that overlap across layers.
-  - Merge these spans into a unified span via adjacent matrix.
+  - Merge these spans into a unified span via adjacency matrix.
 - Span label:
   - Collect predicted label for each combined span.
   - Assign label according to majority vote.
