@@ -233,11 +233,11 @@ reference.head()
 
 # |   start |   end | token_id_start   | token_id_end   | text                               | doc_id          | domain            | confidence   | id       |
 # |--------:|------:|:-----------------|:---------------|:-----------------------------------|:----------------|:------------------|:-------------|:---------|
-# |       2 |     3 | token_1          | token_2        | AMTSGERICHT ERLANGEN               | fictitious_1512 | fictitious_domain | niedrig      | id000001 |
-# |       5 |     9 | token_4          | token_8        | Mozartstraße 23 , 91052 Erlangen   | fictitious_1512 | fictitious_domain | hoch         | id000002 |
-# |      10 |    11 | token_9          | token_10       | HELGA SCHMIDT                      | fictitious_1512 | fictitious_domain | hoch         | id000003 |
-# |      13 |    17 | token_12         | token_16       | Schillerstraße 4 , 91058 Erlangen  | fictitious_1512 | fictitious_domain | hoch         | id000004 |
-# |      18 |    21 | token_17         | token_20       | Rechtsanwälte Schneider & Kollegen | fictitious_1512 | fictitious_domain | mittel       | id000005 |
+# |       1 |     2 | token_1          | token_2        | AMTSGERICHT ERLANGEN               | fictitious_1512 | fictitious_domain | niedrig      | id000001 |
+# |       4 |     8 | token_4          | token_8        | Mozartstraße 23 , 91052 Erlangen   | fictitious_1512 | fictitious_domain | hoch         | id000002 |
+# |       9 |    10 | token_9          | token_10       | HELGA SCHMIDT                      | fictitious_1512 | fictitious_domain | hoch         | id000003 |
+# |      12 |    16 | token_12         | token_16       | Schillerstraße 4 , 91058 Erlangen  | fictitious_1512 | fictitious_domain | hoch         | id000004 |
+# |      17 |    20 | token_17         | token_20       | Rechtsanwälte Schneider & Kollegen | fictitious_1512 | fictitious_domain | mittel       | id000005 |
 ```
 ##### Columns in Convert dataframe
 `start`: Span start position in corpus <br>
@@ -257,11 +257,11 @@ recall_matching.head()
 
 # |   start |   end | token_id_start | token_id_end | text                             | doc_id | domain | anon   | entity       | risk    | token_id_start_Y   | token_id_end_Y   | text_Y                           |  anon_Y  | entity_Y     | risk_Y   | status   |   start_Y |   end_Y |
 # |--------:|------:|:---------------|:-------------|:---------------------------------|:-------|:-------|:-------|:-------------|:--------|:-------------------|:-----------------|:---------------------------------|:---------|:-------------|:---------|:---------|:----------|:--------|
-# |       2 |     3 |                |              | AMTSGERICHT ERLANGEN             |        |        | anon   | court-name   | niedrig |                    |                  |                                  |          |              |          | unmatch  |      -100 |    -100 |
-# |       7 |     9 |                |              | 11 C 122/20                      |        |        | anon   | court-docket | niedrig |                    |                  | 11 C 122/20                      | anon     | court-docket | niedrig  | exact    |         7 |       9 |
-# |      10 |    14 |                |              | Mozartstraße 23 , 91052 Erlangen |        |        | anon   | address-name | hoch    |                    |                  | Mozartstraße 23 , 91052 Erlangen | anon     | address-name | hoch     | exact    |        10 |      14 |
-# |      17 |    21 |                |              | 09131 / 782 - 01                 |        |        | anon   | code-idx     | niedrig |                    |                  | 09131 / 782 - 01                 | anon     | code-idx     | niedrig  | exact    |        17 |      21 |
-# |      24 |    28 |                |              | 09131 / 782 - 105                |        |        | anon   | code-idx     | niedrig |                    |                  | 09131 / 782 - 105                | anon     | code-idx     | niedrig  | exact    |        24 |      28 |
+# |       1 |     2 |                |              | AMTSGERICHT ERLANGEN             |        |        | anon   | court-name   | niedrig |                    |                  |                                  |          |              |          | unmatch  |      -100 |    -100 |
+# |       6 |     8 |                |              | 11 C 122/20                      |        |        | anon   | court-docket | niedrig |                    |                  | 11 C 122/20                      | anon     | court-docket | niedrig  | exact    |         7 |       9 |
+# |       9 |    13 |                |              | Mozartstraße 23 , 91052 Erlangen |        |        | anon   | address-name | hoch    |                    |                  | Mozartstraße 23 , 91052 Erlangen | anon     | address-name | hoch     | exact    |        10 |      14 |
+# |      16 |    20 |                |              | 09131 / 782 - 01                 |        |        | anon   | code-idx     | niedrig |                    |                  | 09131 / 782 - 01                 | anon     | code-idx     | niedrig  | exact    |        17 |      21 |
+# |      23 |    27 |                |              | 09131 / 782 - 105                |        |        | anon   | code-idx     | niedrig |                    |                  | 09131 / 782 - 105                | anon     | code-idx     | niedrig  | exact    |        24 |      28 |
 ```
 ##### Columns in Match dataframe
 `start`: Span start position in reference corpus <br>
