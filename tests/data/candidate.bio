@@ -35,10 +35,10 @@ Steinbrecher	B-mittel	token_28	fictitious_1512	Fictitious_Domain
 Amberger	B-mittel	token_30	fictitious_1512	Fictitious_Domain
 Rechtsanwälte	B-niedrig	token_31	fictitious_1512	Fictitious_Domain
 PartGmbB	O	token_32	fictitious_1512	Fictitious_Domain
-,	O	token_33	fictitious_1512	Fictitious_Domain
-Gothestraße	B-hoch	token_34	fictitious_1512	Fictitious_Domain
+,	B-hoch	token_33	fictitious_1512	Fictitious_Domain
+Gothestraße	I-hoch	token_34	fictitious_1512	Fictitious_Domain
 1	I-hoch	token_35	fictitious_1512	Fictitious_Domain
-,	O	token_36	fictitious_1512	Fictitious_Domain
+,	I-hoch	token_36	fictitious_1512	Fictitious_Domain
 91056	B-hoch	token_37	fictitious_1512	Fictitious_Domain
 Erlangen	I-hoch	token_38	fictitious_1512	Fictitious_Domain
 

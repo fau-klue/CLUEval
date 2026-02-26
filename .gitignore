@@ -15,6 +15,7 @@ build/
 *.egg-info/
 
 *~
+.DS_Store
 .venv/
 venv/
 debug.py
