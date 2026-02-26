@@ -1,0 +1,12 @@
+token_id_start	token_id_end	Risk	token_id_start_Y	token_id_end_Y	Risk_Y	status
+token_1	token_2	niedrig	token_0	token_3	niedrig	contained
+token_4	token_8	hoch	token_4	token_8	hoch	tiled
+token_9	token_10	hoch	token_9	token_10	hoch	exact
+token_12	token_16	hoch			FN	unmatched
+token_17	token_20	mittel	token_17	token_20	mittel	exact
+token_22	token_27	hoch			FN	unmatched
+token_28	token_32	mittel			FN	unmatched
+token_34	token_38	hoch	token_33	token_38	hoch	covered
+token_45	token_50	hoch	token_44	token_50	hoch	contained
+token_53	token_55	niedrig	token_53	token_55	niedrig	exact
+token_74	token_78	hoch			FN	unmatched

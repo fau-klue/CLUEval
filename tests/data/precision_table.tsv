@@ -1,0 +1,21 @@
+token_id_start	token_id_end	Risk	token_id_start_Y	token_id_end_Y	Risk_Y	status
+token_0	token_3	niedrig			FN	unmatched
+token_4	token_6	hoch	token_4	token_8	hoch	contained
+token_7	token_8	mittel	token_4	token_8	hoch	contained
+token_9	token_10	hoch	token_9	token_10	hoch	exact
+token_11	token_11	niedrig			FN	unmatched
+token_12	token_12	hoch	token_12	token_16	hoch	contained
+token_13	token_13	mittel	token_12	token_16	hoch	contained
+token_15	token_16	hoch	token_12	token_16	hoch	contained
+token_17	token_20	mittel	token_17	token_20	mittel	exact
+token_22	token_24	hoch	token_22	token_27	hoch	contained
+token_26	token_27	hoch	token_22	token_27	hoch	contained
+token_28	token_28	mittel	token_28	token_32	mittel	contained
+token_30	token_30	mittel	token_28	token_32	mittel	contained
+token_31	token_31	niedrig	token_28	token_32	mittel	contained
+token_33	token_36	hoch			FN	unmatched
+token_37	token_38	niedrig	token_34	token_38	hoch	contained
+token_44	token_50	hoch			FN	unmatched
+token_53	token_55	niedrig	token_53	token_55	niedrig	exact
+token_73	token_74	hoch			FN	unmatched
+token_76	token_77	hoch	token_74	token_78	hoch	contained
