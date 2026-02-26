@@ -195,6 +195,6 @@ if __name__ == "__main__":
     print(eval_table)
 
     if args.write_to_file:
-        os.makedirs("./tables/", exist_ok=True)
+        os.makedirs(args.write_to_file, exist_ok=True)
         for name, df in tables.items():
             df.to_csv(f"./tables/{name}.tsv", sep="\t", index=False)
