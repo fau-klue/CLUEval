@@ -147,28 +147,28 @@ options:
   -h, --help            show this help message and exit
   -v, --version         output version information and exit
   -l {0,1,2,3}, --lenient {0,1,2,3}
-                        Level of leniency. (default: 3)
+                        Level of leniency. 0: exact, 1: incl. contained, 2: incl. contained and tiled, 3: incl. contained, tiled and covered. (default: 3)
   -a ANNOTATION_LAYER [ANNOTATION_LAYER ...], --annotation_layer ANNOTATION_LAYER [ANNOTATION_LAYER ...]
-                        Names of annotation layers. (default: ['span'])
-  -lc LABEL_COLUMN [LABEL_COLUMN ...], --label_column LABEL_COLUMN [LABEL_COLUMN ...]
-                        Column name for labelled evaluation. (default: None)
-  -sl SPAN_LABEL_COLUMN, --span_label_column SPAN_LABEL_COLUMN
-                        Label column for span-label evaluation. (default: None)
+                        Assign names to annotation layers. (default: ['span'])
+  -le LABELLED_EVAL [LABELLED_EVAL ...], --labelled_eval LABELLED_EVAL [LABELLED_EVAL ...]
+                        Layer name for labelled evaluation. (default: None)
+  -sle SPAN_LABEL_EVAL, --span_label_eval SPAN_LABEL_EVAL
+                        Carry out labelled evaluation for specified annotation layer(s). (default: None)
   -slv SPAN_LABEL_VALUE, --span_label_value SPAN_LABEL_VALUE
-                        Value to filter label column. (default: None)
+                        Value by which to filter span labels. (default: None)
   -cd DOMAIN_COLUMN, --domain_column DOMAIN_COLUMN
-                        Column index of domain information. (default: None)
+                        Column index of domain metadata. (default: None)
   -ci DOC_ID_COLUMN, --doc_id_column DOC_ID_COLUMN
                         Column index of document ID (default: None)
   -ct TOKEN_ID_COLUMN, --token_id_column TOKEN_ID_COLUMN
-                        Column index of token ids. (default: None)
-  -e [{contained,tiled,covered,unmatched} ...], --error_type [{contained,tiled,covered,unmatched} ...]
-                        Filter spans by error types and return error tables. Default setting is 'unmatched' when the option is passed without any addiitonal
-                        parameters. (default: None)
-  -m, --match_tables    Optional argument to print precision and recall matching tables. (default: False)
-  -n N_ROW, --n_row N_ROW
-                        Number of rows to print. (default: 5)
-  -w, --write_to_file   Write tables to files? (Path will be determined automatically) (default: False)
+                        Column index of token ISs. (default: None)
+  -e [{contained,tiled,covered,unmatched} ...], --error_tables [{contained,tiled,covered,unmatched} ...]
+                        Generate error tables for the specified error types. Defaults to 'unmatched' if no values are given. (default: None)
+  -m, --match_tables    Generate detailed precision and recall matching tables. (default: False)
+  -n N_ROWS, --n_rows N_ROWS
+                        Number of table rows to display on screen. (default: 10)
+  -w WRITE_TO_FOLDER, --write_to_folder WRITE_TO_FOLDER
+                        Save tables to files in specified folder (which will be created automatically in the current working directory). 'tables' is used as default (default: None)
 ```
 
 #### Examples with fictitious verdict
