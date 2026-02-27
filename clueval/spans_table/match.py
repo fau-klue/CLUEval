@@ -1,7 +1,7 @@
 import warnings
 warnings.simplefilter(action="ignore", category=FutureWarning)  # Suppress pandas FutureWarnings for the groupby() function for now
-
 import pandas as pd
+import numpy as np
 
 
 class Match:
@@ -14,8 +14,7 @@ class Match:
         exact = self.exact_match(self.x, self.y, on=on)
         rest = self.rest_match(exact)
         match_df = pd.concat([exact, rest], ignore_index=True).sort_values(by=["start", "end"])
-        exact_mask = match_df["status"] == "exact"
-        match_df.loc[exact_mask, ["start_Y", "end_Y"]] = match_df.loc[exact_mask][["start", "end"]].values
+        match_df.loc[match_df["status"] == "exact", ["start_Y", "end_Y"]] = match_df.loc[match_df["status"] == "exact"][["start", "end"]].values
         match_df.drop(columns=["id",
                                "id_y",
                                "id_Y",
@@ -25,6 +24,7 @@ class Match:
         # Fill Nan values in label columns with "FN"
         for column in self.annotation_layer:
             match_df.fillna({column + "_Y": "FN"}, inplace=True)
+        match_df.loc[match_df["status"] == "unmatched", ["token_id_start_Y", "token_id_end_Y", "text_Y"]] = ""
         match_df.loc[match_df[["start_Y", "end_Y"]].isna().any(axis=1), ["start_Y", "end_Y"]] = -100
         match_df[["start_Y", "end_Y"]] = match_df[["start_Y", "end_Y"]].astype("Int64")
         return match_df.reset_index(drop=True)

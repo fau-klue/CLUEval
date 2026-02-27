@@ -84,9 +84,9 @@ class BioToSpanParser:
 
         with open(self.path_to_file, "r", encoding="utf-8") as in_f:
             position = 0
-            token_id = None
-            doc_id = None
-            domain = None
+            token_id = ""
+            doc_id = ""
+            domain = ""
             lines = in_f.readlines()
             for i, line in enumerate(lines):
                 current_line = line.strip().split("\t")
@@ -95,7 +95,7 @@ class BioToSpanParser:
                     if doc_id_column is not None:
                         doc_id = current_line[doc_id_column]
                     else:
-                        doc_id = None
+                        doc_id = ""
                     # Extract token id if exists
                     if token_id_column:
                         token_id = current_line[token_id_column]
@@ -139,9 +139,9 @@ class BioToSpanParser:
             # doc_token_id is the predefined token_id in each document while token_id is the token position in the whole dataset
             position = 0
             start_position = 0
-            doc_id = None
-            current_doc_id = None
-            label = None
+            doc_id = ""
+            current_doc_id = ""
+            label = ""
 
             lines = in_f.readlines()
             for i, line in enumerate(lines):
@@ -158,13 +158,13 @@ class BioToSpanParser:
                     if doc_id_column is not None:
                         doc_id = current_line[doc_id_column]
                     # Check if doc_id != current_doc_id
-                    if doc_id != current_doc_id:
+                    if doc_id != "" and doc_id != current_doc_id:
                         current_doc_id = doc_id
                     current_tag = current_line[tag_column]
                     # Start processing line if current tag is not "O"
                     if current_tag != "O":
                         current_label = re.sub(r"^[BI]-", "", current_tag)
-                        if label is None:
+                        if label == "":
                             # Begin of current span
                             start_position = position
                             label = current_label
@@ -186,5 +186,5 @@ class BioToSpanParser:
                                 doc_id=current_doc_id,
                                 head=tag_column,
                             )
-                            label = None
+                            label = ""
                     position += 1
