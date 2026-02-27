@@ -7,8 +7,7 @@ from .metrics import (
 )
 import pandas as pd
 
-
-def main(
+def evaluate(
     path_reference: str,
     path_candidate: str,
     annotation_layer: str | list[str],
