@@ -1,6 +1,7 @@
 from clueval.spans_table import Convert, Match
 # import pytest
 
+# TODO: Revise test and integrate recall and precision.tsv from SE. Or in test_evaluation.
 
 def test_converter(p1):
 
@@ -54,30 +55,56 @@ def test_converter(p1):
     assert df["domain"].unique()[0] == "fictitious_domain"
 
 
-def test_match(p1, p2):
-    p1_converter = Convert(p1, annotation_layer=["confidence"])
-    p2_converter = Convert(p2, annotation_layer=["confidence"])
+def test_match(p1, p2, precision_table, recall_table):
+    p1_converter = Convert(p1, annotation_layer=["confidence"],token_id_column=2, doc_id_column=3, domain_column=4)
+    p2_converter = Convert(p2, annotation_layer=["confidence"], token_id_column=2, doc_id_column=3, domain_column=4)
+
 
     ref = p1_converter(id_prefix="ref")
     cand = p2_converter(id_prefix="cand")
 
-    recall_match = Match(ref, cand, annotation_layer=["confidence"])(on=["start", "end"])[["start", "end", "confidence", "confidence_Y", "status"]]
-    precision_match = Match(cand, ref, annotation_layer=["confidence"])(on=["start", "end"])[["start", "end", "confidence", "confidence_Y", "status"]]
+    recall_match = Match(ref, cand, annotation_layer=["confidence"])(on=["start", "end"])
+    precision_match = Match(cand, ref, annotation_layer=["confidence"])(on=["start", "end"])
 
     # test overlap cases in recall table
-    assert recall_match["status"][0] == "contained"
-    assert recall_match["status"][1] == "tiled"
-    assert recall_match["status"][2] == "exact"
-    assert recall_match["status"][3] == "unmatched"
+    assert recall_match["status"][0] == recall_table["status"][0]
+    assert recall_match["status"][1] == recall_table["status"][1]
+    assert recall_match["status"][2] == recall_table["status"][2]
+    assert recall_match["status"][3] == recall_table["status"][3]
+
+    assert recall_match["status"].value_counts()["exact"] == recall_table["status"].value_counts()["exact"]
+    assert recall_match["status"].value_counts()["contained"] == recall_table["status"].value_counts()["contained"]
+    assert recall_match["status"].value_counts()["tiled"] == recall_table["status"].value_counts()["tiled"]
+    assert recall_match["status"].value_counts()["covered"] == recall_table["status"].value_counts()["covered"]
+    assert recall_match["status"].value_counts()["unmatched"] == recall_table["status"].value_counts()["unmatched"]
 
     # test overlap cases in precision table
-    assert precision_match["status"][0] == "unmatched"
-    assert precision_match["status"][1] == "contained"
-    assert precision_match["status"][3] == "exact"
-    assert "tiling" not in precision_match["status"].unique()
+    assert precision_match["status"][0] == precision_table["status"][0]
+    assert precision_match["status"][1] == precision_table["status"][1]
+    assert precision_match["status"][3] == precision_table["status"][3]
+    assert "tiled" not in precision_match["status"].unique().tolist()
+    assert "covered" not in precision_match["status"].unique().tolist()
+
+    assert precision_match["status"].value_counts()["exact"] == precision_table["status"].value_counts()["exact"]
+    assert precision_match["status"].value_counts()["contained"] == precision_table["status"].value_counts()["contained"]
+    assert precision_match["status"].value_counts()["unmatched"] == precision_table["status"].value_counts()["unmatched"]
+
 
     # compare confidence label
-    assert recall_match["confidence"][0] == recall_match["confidence_Y"][0]
-    assert recall_match["confidence"][1] == recall_match["confidence_Y"][1]
+    assert recall_match["confidence"][0] == recall_table["Risk_Y"][0]
+    assert recall_match["confidence"][1] == recall_table["Risk_Y"][1]
+
     # test label for longest overlap span
     assert recall_match["confidence_Y"][1] == "hoch"
+
+    # test token id
+    assert recall_match["token_id_start"][0] == recall_table["token_id_start"][0]
+    assert recall_match["token_id_start"].iloc[-1] == recall_table["token_id_start"].iloc[-1]
+    assert recall_match["token_id_end"][0] == recall_table["token_id_end"][0]
+    assert recall_match["token_id_end"].iloc[-1] == recall_table["token_id_end"].iloc[-1]
+
+    assert precision_match["token_id_start"][0] == precision_table["token_id_start"][0]
+    assert precision_match["token_id_start"].iloc[-1] == precision_table["token_id_start"].iloc[-1]
+    assert precision_match["token_id_end"][0] == precision_table["token_id_end"][0]
+    assert precision_match["token_id_end"].iloc[-1] == precision_table["token_id_end"].iloc[-1]
+

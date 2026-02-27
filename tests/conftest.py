@@ -1,4 +1,5 @@
 import pytest
+import pandas as pd
 
 
 @pytest.fixture
@@ -23,3 +24,13 @@ def p1s():
 def p2s():
     """ annotation 1 """
     return "tests/data/candidate-short.bio"
+
+@pytest.fixture
+def precision_table():
+    """ prepared precision table """
+    return pd.read_csv("tests/data/precision_table.tsv", sep="\t")
+
+@pytest.fixture
+def recall_table():
+    """ prepared recall table """
+    return pd.read_csv("tests/data/recall_table.tsv", sep="\t")

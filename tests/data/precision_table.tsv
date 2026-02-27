@@ -8,7 +8,8 @@ token_12	token_12	hoch	token_12	token_16	hoch	contained
 token_13	token_13	mittel	token_12	token_16	hoch	contained
 token_15	token_16	hoch	token_12	token_16	hoch	contained
 token_17	token_20	mittel	token_17	token_20	mittel	exact
-token_22	token_24	hoch	token_22	token_27	hoch	contained
+token_22	token_23	hoch	token_22	token_27	hoch	contained
+token_24	token_24	mittel	token_22	tolen_27	hoch	contained
 token_26	token_27	hoch	token_22	token_27	hoch	contained
 token_28	token_28	mittel	token_28	token_32	mittel	contained
 token_30	token_30	mittel	token_28	token_32	mittel	contained
