@@ -9,7 +9,6 @@ from clueval.error_analysis import ErrorTable
 from clueval.spans_table import BioToSentenceParser
 from clueval.version import __version__
 
-
 def arguments():
 
     parser = argparse.ArgumentParser(
@@ -32,7 +31,7 @@ def arguments():
         type=int,
         default=3,
         choices=[0, 1, 2, 3],
-        help="Level of leniency.",
+        help="Level of leniency. 0: exact, 1: incl. contained, 2: incl. contained and  tiled,  3: incl. contained, tiled and covered.",
     )
     # annotation layers
     parser.add_argument(
@@ -41,31 +40,31 @@ def arguments():
         nargs="+",
         type=str,
         default=['span'],
-        help="Names of annotation layers.",
+        help="Names of annotation layers. Default: 'span'.",
     )
     # labelled evaluation
     parser.add_argument(
-        "-lc",
-        "--label_column",
+        "-le",
+        "--labelled_eval",
         nargs="+",
         type=str,
         default=None,
-        help="Column name for labelled evaluation.",
+        help="Layer name for labelled evaluation.",
     )
     # filtered evaluation
     parser.add_argument(
-        "-sl",
-        "--span_label_column",
+        "-sle",
+        "--span_label_eval",
         type=str,
         default=None,
-        help="Label column for span-label evaluation.",
+        help="Label layer for filtered span-level evaluation.",
     )
     parser.add_argument(
         "-slv",
         "--span_label_value",
         type=str,
         default=None,
-        help="Value to filter label column."
+        help="Value to filter label layer for the evaluation."
     )
     # meta information; TODO: generalise
     parser.add_argument(
@@ -118,7 +117,7 @@ def arguments():
         "--write_to_file",
         default=None,
         type=str,
-        help="Optional argument to save table to file. The 'tables' folder will be created automatically in the current working directory."
+        help="Optional argument to save table to file. The 'tables' folder will be automatically created in the current working directory if no parameter is specified."
     )
     return parser.parse_args()
 
@@ -128,7 +127,7 @@ if __name__ == "__main__":
     args = arguments()
 
     tables = {}
-    precision_table, recall_table, eval_table = main(
+    precision_table, recall_table, eval_table = evaluate(
         args.reference,
         args.candidate,
         annotation_layer=args.annotation_layer,
@@ -194,7 +193,10 @@ if __name__ == "__main__":
     print("Evaluation results:")
     print(eval_table)
 
-    if args.write_to_file:
-        os.makedirs(args.write_to_file, exist_ok=True)
+    if not args.write_to_file:
+        file_path = "tables/"
+    else:
+        file_path = args.write_to_file
+        os.makedirs(file_path, exist_ok=True)
         for name, df in tables.items():
             df.to_csv(f"./tables/{name}.tsv", sep="\t", index=False)
