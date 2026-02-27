@@ -12,17 +12,17 @@ class Metrics(ABC):
     @staticmethod
     def precision(true_positives: int, pre_denominator: int):
         """Compute precision scores. TP / TP + FP"""
-        return round(100 * true_positives / pre_denominator, 5)
+        return round(100 * true_positives / pre_denominator, 4)
 
     @staticmethod
     def recall(true_positives: int, recall_denominator: int):
         """Compute recall scores. TP / TP + FN"""
-        return round(100 * true_positives / recall_denominator, 5)
+        return round(100 * true_positives / recall_denominator, 4)
 
     @staticmethod
     def f1(precision, recall):
         """Compute F1. 2*P*R / (P+R)"""
-        return round(2 * precision * recall / (precision + recall), 5)
+        return round(2 * precision * recall / (precision + recall), 4)
 
 
 class MetricsForSpansAnonymisation(Metrics):
