@@ -3,7 +3,7 @@
 import os
 import argparse
 
-from clueval.evaluation import main
+from clueval.evaluation import evaluate
 from clueval.spans_table import Convert
 from clueval.error_analysis import ErrorTable
 from clueval.spans_table import BioToSentenceParser
@@ -40,7 +40,7 @@ def arguments():
         nargs="+",
         type=str,
         default=['span'],
-        help="Names of annotation layers. Default: 'span'.",
+        help="Assign names to annotation layers.",
     )
     # labelled evaluation
     parser.add_argument(
@@ -57,14 +57,14 @@ def arguments():
         "--span_label_eval",
         type=str,
         default=None,
-        help="Label layer for filtered span-level evaluation.",
+        help="Carry out labelled evaluation for specified annotation layer(s).",
     )
     parser.add_argument(
         "-slv",
         "--span_label_value",
         type=str,
         default=None,
-        help="Value to filter label layer for the evaluation."
+       help="Value by which to filter span labels."
     )
     # meta information; TODO: generalise
     parser.add_argument(
@@ -72,7 +72,7 @@ def arguments():
         "--domain_column",
         type=int,
         default=None,
-        help="Column index of domain information.",
+        help="Column index of domain metadata.",
     )
     parser.add_argument(
         "-ci",
@@ -86,38 +86,37 @@ def arguments():
         "--token_id_column",
         type=str,
         default=None,
-        help="Column index of token ids.",
+        help="Column index of token ISs.",
     )
     # error types and tables
     parser.add_argument(
         "-e",
-        "--error_type",
+        "--error_tables",
         nargs="*",
         type=str,
         default=None,
         choices=["contained", "tiled", "covered", "unmatched"],
-        help="Filter spans by error types and return error tables. Default setting is 'unmatched' when the option is passed without any additional parameters."
+        help="Generate error tables for the specified error types. Defaults to 'unmatched' if no values are given."
     )
     parser.add_argument(
         "-m",
         "--match_tables",
         action="store_true",
-        help="Optional argument to print precision and recall matching tables."
+        help="Generate detailed precision and recall matching tables."
     )
     parser.add_argument(
         "-n",
-        "--n_row",
-        default=5,
+        "--n_rows",
+        default=10,
         type=int,
-        help="Number of rows to print."
+        help="Number of table rows to display on screen."
     )
     # output file
     parser.add_argument(
         "-w",
-        "--write_to_file",
-        default=None,
+        "--write_to_folder",
         type=str,
-        help="Optional argument to save table to file. The 'tables' folder will be automatically created in the current working directory if no parameter is specified."
+        help="Save tables to files in specified folder (which will be created automatically in the current working directory). 'tables' is used as default"
     )
     return parser.parse_args()
 
@@ -134,10 +133,10 @@ if __name__ == "__main__":
         token_id_column=int(args.token_id_column) if args.token_id_column else None,
         domain_column=int(args.domain_column) if args.domain_column else None,
         doc_id_column=int(args.doc_id_column) if args.doc_id_column else None,
-        filter_head=args.span_label_column,
+        filter_head=args.span_label_eval,
         head_value=args.span_label_value,
-        categorical_evaluation=True if args.label_column else False,
-        categorical_head=args.label_column,
+        categorical_evaluation=True if args.labelled_eval else False,
+        categorical_head=args.labelled_eval,
         lenient_level=args.lenient,
     )
     tables.update({"precision_table": precision_table,
@@ -145,9 +144,9 @@ if __name__ == "__main__":
                    "evaluation_table": eval_table})
 
     # set 'unmatched' as default value when the argument error_type is passed
-    if args.error_type is not None:
-        if len(args.error_type) == 0:
-            args.error_type = ["unmatched"]
+    if args.error_tables is not None:
+        if len(args.error_tables) == 0:
+            args.error_tables = ["unmatched"]
         reference = Convert(args.reference,
                             annotation_layer=args.annotation_layer,
                             token_id_column=int(args.token_id_column) if args.token_id_column else None,
@@ -165,29 +164,29 @@ if __name__ == "__main__":
 
         layers = [layer + "_Y" for layer in args.annotation_layer]
 
-        recall_error_analysis = ErrorTable(recall_table[recall_table["status"].isin(args.error_type)], candidate, reference_sents)
+        recall_error_analysis = ErrorTable(recall_table[recall_table["status"].isin(args.error_tables)], candidate, reference_sents)
         recall_erroneous_table = recall_error_analysis(annotation_layer=args.annotation_layer + layers, windows=10)
 
-        precision_error_analysis = ErrorTable(precision_table[precision_table["status"].isin(args.error_type)], reference, reference_sents)
+        precision_error_analysis = ErrorTable(precision_table[precision_table["status"].isin(args.error_tables)], reference, reference_sents)
         precision_erroneous_table = precision_error_analysis(annotation_layer=args.annotation_layer + layers, windows=10)
 
         tables.update({"precision_error_table": precision_erroneous_table,
                       "recall_error_table": recall_erroneous_table})
         print("Precision error table:")
-        print(precision_erroneous_table.head(args.n_row))
+        print(precision_erroneous_table.head(args.n_rows))
         print()
 
         print("Recall error table:")
-        print(recall_erroneous_table.head(args.n_row))
+        print(recall_erroneous_table.head(args.n_rows))
         print()
 
     if args.match_tables:
         print("Precision table:")
-        print(precision_table.head(args.n_row))
+        print(precision_table.head(args.n_rows))
         print()
 
         print("Recall table:")
-        print(recall_table.head(args.n_row))
+        print(recall_table.head(args.n_rows))
         print()
 
     print("Evaluation results:")
@@ -197,6 +196,7 @@ if __name__ == "__main__":
         file_path = "tables/"
     else:
         file_path = args.write_to_file
-        os.makedirs(file_path, exist_ok=True)
-        for name, df in tables.items():
-            df.to_csv(f"./tables/{name}.tsv", sep="\t", index=False)
+        
+    os.makedirs(file_path, exist_ok=True)
+    for name, df in tables.items():
+        df.to_csv(f"./{file_path}/{name}.tsv", sep="\t", index=False)
