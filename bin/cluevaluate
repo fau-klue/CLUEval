@@ -115,6 +115,8 @@ def arguments():
     parser.add_argument(
         "-w",
         "--write_to_folder",
+        nargs="?",
+        const="tables",
         type=str,
         help="Save tables to files in specified folder (which will be created automatically in the current working directory). 'tables' is used as default"
     )
@@ -192,10 +194,8 @@ if __name__ == "__main__":
     print("Evaluation results:")
     print(eval_table)
 
-    if not args.write_to_folder:
-        file_path = "tables/"
-    else:
-        file_path = args.write_to_folder
+
+    file_path = args.write_to_folder
     os.makedirs(file_path, exist_ok=True)
     for name, df in tables.items():
         df.to_csv(f"./{file_path}/{name}.tsv", sep="\t", index=False)
