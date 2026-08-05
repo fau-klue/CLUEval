@@ -118,8 +118,6 @@ class ErrorTable:
                     left_windows = max(0, token_ids.index(ref_start) - windows)
                     right_windows = min(len(sentence), token_ids.index(ref_end) + windows)
 
-                    if "Züricher" in sentence:
-                        print()
                     # Assign token status according to corpus position:
                     # 0: Token does not belong to any span
                     # 1: Token contained in both ref. and candidate spans
