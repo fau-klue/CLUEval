@@ -12,13 +12,18 @@ class Metrics(ABC):
     @staticmethod
     def precision(true_positives: int, pre_denominator: int):
         """Compute precision scores. TP / TP + FP"""
-        return round(100 * true_positives / pre_denominator, 4)
+        try:
+            return round(100 * true_positives / pre_denominator, 4)
+        except ZeroDivisionError:
+            return 0.0
 
     @staticmethod
     def recall(true_positives: int, recall_denominator: int):
         """Compute recall scores. TP / TP + FN"""
-        return round(100 * true_positives / recall_denominator, 4)
-
+        try:
+            return round(100 * true_positives / recall_denominator, 4)
+        except ZeroDivisionError:
+            return 0.0
     @staticmethod
     def f1(precision, recall):
         """Compute F1. 2*P*R / (P+R)"""
