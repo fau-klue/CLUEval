@@ -97,7 +97,7 @@ class BioToSpanParser:
                     else:
                         doc_id = ""
                     # Extract token id if exists
-                    if token_id_column:
+                    if token_id_column is not None:
                         token_id = current_line[token_id_column]
                     # We assume that the tag column is directly adjacent to the token column
                     token = current_line[0]
