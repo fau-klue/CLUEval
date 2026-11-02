@@ -172,13 +172,22 @@ class BioToSpanParser:
                         if len(next_line) > 1:
                             next_tag = next_line[tag_column]
                             next_label = re.sub(r"^[BI]-", "", next_tag)
-                        # Generate current span if next tag is 'O', if new span starts with 'B-' or
-                        # if new entity tag -> Doesn't matter if it starts with 'I-' instead of 'B-'
+                        # Extract next doc_id to force-close a span at document boundaries, even if the
+                        # tag continues as "I-" without a fresh "B-" right after the boundary
+                        next_doc_id = current_doc_id
+                        if len(next_line) > 1 and doc_id_column is not None:
+                            candidate_next_doc_id = next_line[doc_id_column]
+                            if candidate_next_doc_id != "":
+                                next_doc_id = candidate_next_doc_id
+                        # Generate current span if next tag is 'O', if new span starts with 'B-', if new
+                        # entity tag, or if the document changes -> Doesn't matter if it starts with 'I-'
+                        # instead of 'B-'
                         if (
                             len(next_line) == 1
                             or next_line == []
                             or next_tag.startswith("B-")
                             or next_label != label
+                            or next_doc_id != current_doc_id
                         ):
                             yield ParsedSpan(
                                 position_start=start_position,
